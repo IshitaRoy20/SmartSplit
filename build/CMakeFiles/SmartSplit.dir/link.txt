@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/SmartSplit.dir/src/main.cpp.o CMakeFiles/SmartSplit.dir/src/cli/Menu.cpp.o -o SmartSplit 
