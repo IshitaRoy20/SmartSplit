@@ -158,8 +158,8 @@ CMakeFiles/SmartSplit.dir/src/cli/Menu.cpp.o: \
  /usr/include/c++/13/bits/stl_bvector.h \
  /usr/include/c++/13/bits/vector.tcc \
  /workspaces/SmartSplit/src/cli/../services/../repository/../models/Group.h \
- /workspaces/SmartSplit/src/cli/../services/UserService.h \
- /workspaces/SmartSplit/src/cli/../services/../repository/FileUserRepository.h \
- /workspaces/SmartSplit/src/cli/../services/../repository/IUserRepository.h \
- /workspaces/SmartSplit/src/cli/../services/../repository/../models/User.h \
+ /workspaces/SmartSplit/src/cli/../services/MemberService.h \
+ /workspaces/SmartSplit/src/cli/../services/../repository/FileMemberRepository.h \
+ /workspaces/SmartSplit/src/cli/../services/../repository/IMemberRepository.h \
+ /workspaces/SmartSplit/src/cli/../services/../repository/../models/Member.h \
  /usr/include/c++/13/limits
