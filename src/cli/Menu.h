@@ -1,15 +1,22 @@
 #pragma once
 
 #include "../services/GroupService.h"
+#include "../services/UserService.h"
 
-class Menu {
+class Menu
+{
 private:
+
     GroupService groupService;
+    UserService userService;
 
 public:
-    void showMainMenu();
+
+    void run();
 
     void createGroup();
-
     void listGroups();
+
+    void createUser();
+    void listUsers();
 };

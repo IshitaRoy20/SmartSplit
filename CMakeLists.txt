@@ -11,4 +11,5 @@ add_executable(
     src/main.cpp
     src/cli/Menu.cpp
     src/repository/FileGroupRepository.cpp
+    src/repository/FileUserRepository.cpp
 )

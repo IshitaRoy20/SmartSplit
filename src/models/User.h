@@ -1,19 +1,33 @@
 #pragma once
+
 #include <string>
-class User {
+
+class User
+{
 private:
-    int userId;
+
+    int id;
     std::string name;
 
 public:
-    User(int id, std::string name)
-        : userId(id), name(name) {}
 
-    int getId() const {
-        return userId;
+    User() = default;
+
+    User(
+        int id,
+        const std::string& name
+    )
+        : id(id),
+          name(name)
+    {}
+
+    int getId() const
+    {
+        return id;
     }
 
-    std::string getName() const {
+    std::string getName() const
+    {
         return name;
     }
 };
