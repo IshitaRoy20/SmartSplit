@@ -15,22 +15,23 @@ void Menu::showMainMenu() {
     std::cout << "\nChoice: ";
 }
 
-void Menu::createGroup() {
-
-    int id;
+void Menu::createGroup()
+{
     std::string name;
-
-    std::cout << "Enter Group ID: ";
-    std::cin >> id;
 
     std::cin.ignore();
 
     std::cout << "Enter Group Name: ";
-    std::getline(std::cin, name);
 
-    groupService.createGroup(id, name);
+    std::getline(
+        std::cin,
+        name
+    );
 
-    std::cout << "\nGroup Created Successfully\n";
+    groupService.createGroup(name);
+
+    std::cout
+        << "\nGroup Created Successfully\n";
 }
 
 void Menu::listGroups() {

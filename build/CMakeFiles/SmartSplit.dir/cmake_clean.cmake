@@ -3,6 +3,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/SmartSplit.dir/src/cli/Menu.cpp.o.d"
   "CMakeFiles/SmartSplit.dir/src/main.cpp.o"
   "CMakeFiles/SmartSplit.dir/src/main.cpp.o.d"
+  "CMakeFiles/SmartSplit.dir/src/repository/FileGroupRepository.cpp.o"
+  "CMakeFiles/SmartSplit.dir/src/repository/FileGroupRepository.cpp.o.d"
   "SmartSplit"
   "SmartSplit.pdb"
 )

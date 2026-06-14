@@ -1,32 +1,69 @@
 #pragma once
-#include <iostream>
-#include <vector>
-#include "../models/Group.h"
 
-class GroupService {
+#include <iostream>
+
+#include "../repository/FileGroupRepository.h"
+
+class GroupService
+{
 private:
-    std::vector<Group> groups;
+
+    FileGroupRepository repository;
+
+    int nextId = 1;
 
 public:
-    void createGroup(int id, const std::string& name) {
-        groups.emplace_back(id, name);
+
+    GroupService()
+    {
+        auto groups =
+            repository.getAllGroups();
+
+        if(!groups.empty())
+        {
+            nextId =
+                groups.back().getId()
+                + 1;
+        }
     }
 
-    void listGroups() {
+    void createGroup(
+        const std::string& name
+    )
+    {
+        Group group(
+            nextId++,
+            name
+        );
 
-        if(groups.empty()) {
-            std::cout << "\nNo Groups Found\n";
+        repository.saveGroup(
+            group
+        );
+    }
+
+    void listGroups()
+    {
+        auto groups =
+            repository.getAllGroups();
+
+        if(groups.empty())
+        {
+            std::cout
+            << "\nNo Groups Found\n";
+
             return;
         }
 
-        std::cout << "\nGroups:\n";
+        std::cout
+        << "\nGroups:\n";
 
-        for(auto& g : groups) {
+        for(auto& g : groups)
+        {
             std::cout
-                << g.getId()
-                << ". "
-                << g.getName()
-                << "\n";
+            << g.getId()
+            << ". "
+            << g.getName()
+            << "\n";
         }
     }
 };

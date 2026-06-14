@@ -8,8 +8,7 @@ include_directories(src)
 
 add_executable(
     SmartSplit
-
     src/main.cpp
-
     src/cli/Menu.cpp
+    src/repository/FileGroupRepository.cpp
 )

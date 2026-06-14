@@ -1,22 +1,29 @@
 #pragma once
 
 #include <string>
-#include <vector>
 
 class Group {
 private:
-    int groupId;
-    std::string groupName;
+    int id;
+    std::string name;
 
 public:
-    Group(int id, std::string name)
-        : groupId(id), groupName(name) {}
+
+    Group() = default;
+
+    Group(
+        int id,
+        const std::string& name
+    )
+        : id(id),
+          name(name)
+    {}
 
     int getId() const {
-        return groupId;
+        return id;
     }
 
     std::string getName() const {
-        return groupName;
+        return name;
     }
 };
