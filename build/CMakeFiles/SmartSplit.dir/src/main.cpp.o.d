@@ -157,4 +157,8 @@ CMakeFiles/SmartSplit.dir/src/main.cpp.o: \
  /usr/include/c++/13/bits/stl_vector.h \
  /usr/include/c++/13/bits/stl_bvector.h \
  /usr/include/c++/13/bits/vector.tcc \
- /workspaces/SmartSplit/src/cli/../services/../repository/../models/Group.h
+ /workspaces/SmartSplit/src/cli/../services/../repository/../models/Group.h \
+ /workspaces/SmartSplit/src/cli/../services/UserService.h \
+ /workspaces/SmartSplit/src/cli/../services/../repository/FileUserRepository.h \
+ /workspaces/SmartSplit/src/cli/../services/../repository/IUserRepository.h \
+ /workspaces/SmartSplit/src/cli/../services/../repository/../models/User.h

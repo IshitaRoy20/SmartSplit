@@ -201,6 +201,30 @@ src/repository/FileGroupRepository.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/SmartSplit.dir/build.make CMakeFiles/SmartSplit.dir/src/repository/FileGroupRepository.cpp.s
 .PHONY : src/repository/FileGroupRepository.cpp.s
 
+src/repository/FileUserRepository.o: src/repository/FileUserRepository.cpp.o
+.PHONY : src/repository/FileUserRepository.o
+
+# target to build an object file
+src/repository/FileUserRepository.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/SmartSplit.dir/build.make CMakeFiles/SmartSplit.dir/src/repository/FileUserRepository.cpp.o
+.PHONY : src/repository/FileUserRepository.cpp.o
+
+src/repository/FileUserRepository.i: src/repository/FileUserRepository.cpp.i
+.PHONY : src/repository/FileUserRepository.i
+
+# target to preprocess a source file
+src/repository/FileUserRepository.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/SmartSplit.dir/build.make CMakeFiles/SmartSplit.dir/src/repository/FileUserRepository.cpp.i
+.PHONY : src/repository/FileUserRepository.cpp.i
+
+src/repository/FileUserRepository.s: src/repository/FileUserRepository.cpp.s
+.PHONY : src/repository/FileUserRepository.s
+
+# target to generate assembly for a file
+src/repository/FileUserRepository.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/SmartSplit.dir/build.make CMakeFiles/SmartSplit.dir/src/repository/FileUserRepository.cpp.s
+.PHONY : src/repository/FileUserRepository.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -219,6 +243,9 @@ help:
 	@echo "... src/repository/FileGroupRepository.o"
 	@echo "... src/repository/FileGroupRepository.i"
 	@echo "... src/repository/FileGroupRepository.s"
+	@echo "... src/repository/FileUserRepository.o"
+	@echo "... src/repository/FileUserRepository.i"
+	@echo "... src/repository/FileUserRepository.s"
 .PHONY : help
 
 
