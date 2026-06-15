@@ -2,62 +2,48 @@
 
 #include <fstream>
 #include <sstream>
+#include <iostream>
 
-void FileExpenseRepository::saveExpense(
-    const Expense& expense
-)
+void FileExpenseRepository::saveExpense(const Expense& expense)
 {
-    std::ofstream file(
-        "../data/expenses.txt",
-        std::ios::app
-    );
+    std::ofstream file("../data/expenses.txt", std::ios::app);
 
-    file
-        << expense.getId()
-        << ","
-        << expense.getGroupId()
-        << ","
-        << expense.getTitle()
-        << ","
-        << expense.getAmount()
-        << "\n";
+    file << expense.getId()
+         << ","
+         << expense.getGroupId()
+         << ","
+         << expense.getTitle()
+         << ","
+         << expense.getAmount()
+         << "\n";
 }
 
-std::vector<Expense>
-FileExpenseRepository::getAllExpenses()
+std::vector<Expense> FileExpenseRepository::getAllExpenses()
 {
     std::vector<Expense> expenses;
 
-    std::ifstream file(
-        "../data/expenses.txt"
-    );
+    std::ifstream file("../data/expenses.txt");
 
     std::string line;
 
-    while(std::getline(file,line))
+    while(std::getline(file, line))
     {
-        if(line.empty())
-        {
-            continue;
-        }
+        if(line.empty()) continue;
 
         std::stringstream ss(line);
 
-        std::string idStr;
-        std::string groupIdStr;
-        std::string title;
-        std::string amountStr;
+        std::string id, groupId, title, amount;
 
-        std::getline(ss,idStr,',');
-        std::getline(ss,groupIdStr,',');
-        std::getline(ss,title,',');
-        std::getline(ss,amountStr);
+        std::getline(ss, id, ',');
+        std::getline(ss, groupId, ',');
+        std::getline(ss, title, ',');
+        std::getline(ss, amount);
 
         expenses.emplace_back(
-            std::stoi(idStr),
-            std::stoi(groupIdStr),
+            std::stoi(id),
+            std::stoi(groupId),
             title,
-            std::stod(amountStr)
+            std::stod(amount)
         );
     }
 

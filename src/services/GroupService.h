@@ -26,7 +26,6 @@ public:
                 + 1;
         }
     }
-
     void createGroup(
         const std::string& name
     )

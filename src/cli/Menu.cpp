@@ -104,7 +104,11 @@ void Menu::manageGroup()
             << "1. Add Member\n"
             << "2. View Members\n"
             << "3. Remove Member\n"
-            << "4. Back\n"
+            << "\n"
+            << "4. Add Expense\n"
+            << "5. View Expenses\n"
+            << "\n"
+            << "6. Back\n"
             << "=================================\n"
             << "Choice: ";
 
@@ -125,6 +129,14 @@ void Menu::manageGroup()
                 break;
 
             case 4:
+                addExpense(groupId);
+                break;
+
+            case 5:
+                viewExpenses(groupId);
+                break;
+
+            case 6:
                 return;
 
             default:
@@ -132,6 +144,105 @@ void Menu::manageGroup()
                     << "\nInvalid Choice\n";
         }
     }
+}
+void Menu::viewExpenses(
+    int groupId
+)
+{
+    std::cout
+        << "\n===== EXPENSES =====\n";
+
+    expenseService.viewExpenses(
+        groupId
+    );
+}
+void Menu::addExpense(
+    int groupId
+)
+{
+    std::string title;
+
+    double totalAmount;
+
+    int payerCount;
+
+    std::cin.ignore(
+        std::numeric_limits<std::streamsize>::max(),
+        '\n'
+    );
+
+    std::cout
+        << "\nExpense Title: ";
+
+    std::getline(
+        std::cin,
+        title
+    );
+
+    std::cout
+        << "Total Expense Amount: ";
+
+    std::cin >> totalAmount;
+
+    int expenseId =
+        expenseService.createExpense(
+            groupId,
+            title,
+            totalAmount
+        );
+
+    std::cout
+        << "\n===== MEMBERS =====\n";
+
+    memberService.viewMembers(
+        groupId
+    );
+
+    std::cout
+        << "\nNumber Of Payers: ";
+
+    std::cin >> payerCount;
+
+    double paidSum = 0;
+
+    for(int i=0; i<payerCount; i++)
+    {
+        int memberId;
+
+        double paidAmount;
+
+        std::cout
+            << "\nMember ID: ";
+
+        std::cin >> memberId;
+
+        std::cout
+            << "Amount Paid: ";
+
+        std::cin >> paidAmount;
+
+        paidSum += paidAmount;
+
+        expenseService.addPayment(
+            expenseId,
+            memberId,
+            paidAmount
+        );
+    }
+
+    if(paidSum != totalAmount)
+    {
+        std::cout
+            << "\nWARNING:\n"
+            << "Total Paid = "
+            << paidSum
+            << "\nExpense Amount = "
+            << totalAmount
+            << "\n";
+    }
+
+    std::cout
+        << "\nExpense Added Successfully\n";
 }
 
 void Menu::addMember(int groupId)
