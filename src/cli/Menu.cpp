@@ -1,5 +1,5 @@
 #include "Menu.h"
-
+#include <set>
 #include <iostream>
 #include <limits>
 
@@ -81,17 +81,48 @@ void Menu::listGroups()
 
 void Menu::manageGroup()
 {
-    int groupId;
+        auto groups =
+            groupService.getAllGroups();
 
-    std::cout
-        << "\n===== AVAILABLE GROUPS =====\n";
+        if(groups.empty())
+        {
+            std::cout
+                << "\nNo Groups Exist.\n"
+                << "Create a Group First.\n";
 
-    groupService.listGroups();
+            return;
+        }
 
-    std::cout
-        << "\nEnter Group ID: ";
+        int groupId;
 
-    std::cin >> groupId;
+        std::cout
+            << "\n===== AVAILABLE GROUPS =====\n";
+
+        groupService.listGroups();
+
+        std::cout
+            << "\nEnter Group ID: ";
+
+        std::cin >> groupId;
+
+        bool validGroup = false;
+
+        for(const auto& group : groups)
+        {
+            if(group.getId() == groupId)
+            {
+                validGroup = true;
+                break;
+            }
+        }
+
+        if(!validGroup)
+        {
+            std::cout
+                << "\nInvalid Group ID.\n";
+
+            return;
+        }
 
     int choice;
 
@@ -160,6 +191,27 @@ void Menu::addExpense(
     int groupId
 )
 {
+            auto allMembers =
+            memberService.getAllMembers();
+
+        int memberCount = 0;
+
+        for(const auto& member : allMembers)
+        {
+            if(member.getGroupId() == groupId)
+            {
+                memberCount++;
+            }
+        }
+
+        if(memberCount == 0)
+        {
+            std::cout
+                << "\nNo Members Found In This Group.\n"
+                << "Add Members First.\n";
+
+            return;
+        }
     std::string title;
 
     double totalAmount;
@@ -203,32 +255,64 @@ void Menu::addExpense(
 
     std::cin >> payerCount;
 
-    double paidSum = 0;
+            if(payerCount > memberCount)
+        {
+            std::cout
+                << "\nInvalid Payer Count.\n"
+                << "Only "
+                << memberCount
+                << " Member(s) Exist.\n";
 
-    for(int i=0; i<payerCount; i++)
-    {
-        int memberId;
+            return;
+        }
 
-        double paidAmount;
+        if(payerCount <= 0)
+        {
+            std::cout
+                << "\nPayer Count Must Be Positive.\n";
 
-        std::cout
-            << "\nMember ID: ";
+            return;
+        }
 
-        std::cin >> memberId;
+        double paidSum = 0;
 
-        std::cout
-            << "Amount Paid: ";
+std::set<int> usedPayers;
 
-        std::cin >> paidAmount;
+        for(int i=0; i<payerCount; i++)
+        {
+            int memberId;
 
-        paidSum += paidAmount;
+            double paidAmount;
 
-        expenseService.addPayment(
-            expenseId,
-            memberId,
-            paidAmount
-        );
-    }
+            std::cout
+                << "\nMember ID: ";
+
+            std::cin >> memberId;
+
+            if(usedPayers.count(memberId))
+            {
+                std::cout
+                    << "\nMember Already Added As Payer.\n";
+
+                i--;
+                continue;
+            }
+
+            usedPayers.insert(memberId);
+
+            std::cout
+                << "Amount Paid: ";
+
+            std::cin >> paidAmount;
+
+            paidSum += paidAmount;
+
+            expenseService.addPayment(
+                expenseId,
+                memberId,
+                paidAmount
+            );
+        }
 
     if(paidSum != totalAmount)
     {
@@ -280,6 +364,28 @@ void Menu::viewMembers(int groupId)
 
 void Menu::removeMember(int groupId)
 {
+    auto allMembers =
+        memberService.getAllMembers();
+
+    bool groupHasMembers = false;
+
+    for(const auto& member : allMembers)
+    {
+        if(member.getGroupId() == groupId)
+        {
+            groupHasMembers = true;
+            break;
+        }
+    }
+
+    if(!groupHasMembers)
+    {
+        std::cout
+            << "\nNo Members Found In This Group.\n";
+
+        return;
+    }
+
     std::cout
         << "\n===== MEMBERS =====\n";
 
@@ -293,6 +399,26 @@ void Menu::removeMember(int groupId)
         << "\nEnter Member ID: ";
 
     std::cin >> memberId;
+
+    bool validMember = false;
+
+    for(const auto& member : allMembers)
+    {
+        if(member.getGroupId() == groupId &&
+           member.getId() == memberId)
+        {
+            validMember = true;
+            break;
+        }
+    }
+
+    if(!validMember)
+    {
+        std::cout
+            << "\nInvalid Member ID.\n";
+
+        return;
+    }
 
     memberService.removeMember(
         memberId
