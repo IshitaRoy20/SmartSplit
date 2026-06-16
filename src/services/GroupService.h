@@ -65,4 +65,8 @@ public:
             << "\n";
         }
     }
+    std::vector<Group> getAllGroups()
+{
+    return repository.getAllGroups();
+}
 };

@@ -80,4 +80,8 @@ public:
             memberId
         );
     }
+    std::vector<Member> getAllMembers()
+{
+    return repository.getAllMembers();
+}
 };
