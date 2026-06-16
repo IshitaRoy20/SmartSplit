@@ -4,6 +4,7 @@
 #include "../repository/FileExpensePaymentRepository.h"
 
 #include <iostream>
+#include <unordered_map>
 
 class ExpenseService
 {
@@ -87,4 +88,92 @@ public:
             }
         }
     }
+
+    void viewBalances(
+    int groupId,
+    const std::vector<Member>& members
+    )
+    {
+        auto expenses =
+            expenseRepo.getAllExpenses();
+
+        auto payments =
+            paymentRepo.getAllPayments();
+
+        std::unordered_map<int,double>
+            balances;
+
+        for(const auto& member : members)
+        {
+            if(member.getGroupId() == groupId)
+            {
+                balances[
+                    member.getId()
+                ] = 0;
+            }
+        }
+
+        for(const auto& payment : payments)
+        {
+            balances[
+                payment.getMemberId()
+            ] += payment.getAmountPaid();
+        }
+
+        for(const auto& expense : expenses)
+        {
+            if(expense.getGroupId()
+            != groupId)
+            {
+                continue;
+            }
+
+            int memberCount = 0;
+
+            for(const auto& member : members)
+            {
+                if(member.getGroupId()
+                == groupId)
+                {
+                    memberCount++;
+                }
+            }
+
+            double share =
+                expense.getAmount()
+                / memberCount;
+
+            for(const auto& member : members)
+            {
+                if(member.getGroupId()
+                == groupId)
+                {
+                    balances[
+                        member.getId()
+                    ] -= share;
+                }
+            }
+        }
+
+        std::cout
+            << "\n===== BALANCES =====\n";
+
+        for(const auto& member : members)
+        {
+            if(member.getGroupId()
+            != groupId)
+            {
+                continue;
+            }
+
+            std::cout
+                << member.getName()
+                << " : "
+                << balances[
+                    member.getId()
+                ]
+                << "\n";
+        }
+    }
+
 };

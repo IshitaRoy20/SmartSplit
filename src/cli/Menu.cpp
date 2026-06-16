@@ -138,8 +138,9 @@ void Menu::manageGroup()
             << "\n"
             << "4. Add Expense\n"
             << "5. View Expenses\n"
+            << "6. View Balances\n"
             << "\n"
-            << "6. Back\n"
+            << "7. Back\n"
             << "=================================\n"
             << "Choice: ";
 
@@ -166,8 +167,10 @@ void Menu::manageGroup()
             case 5:
                 viewExpenses(groupId);
                 break;
-
             case 6:
+                viewBalances(groupId);
+                break;
+            case 7:
                 return;
 
             default:
@@ -185,6 +188,15 @@ void Menu::viewExpenses(
 
     expenseService.viewExpenses(
         groupId
+    );
+}
+void Menu::viewBalances(
+    int groupId
+)
+{
+    expenseService.viewBalances(
+        groupId,
+        memberService.getAllMembers()
     );
 }
 void Menu::addExpense(
