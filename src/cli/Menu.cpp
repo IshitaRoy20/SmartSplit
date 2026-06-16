@@ -236,13 +236,6 @@ void Menu::addExpense(
 
     std::cin >> totalAmount;
 
-    int expenseId =
-        expenseService.createExpense(
-            groupId,
-            title,
-            totalAmount
-        );
-
     std::cout
         << "\n===== MEMBERS =====\n";
 
@@ -274,56 +267,105 @@ void Menu::addExpense(
             return;
         }
 
-        double paidSum = 0;
+       double paidSum = 0;
 
 std::set<int> usedPayers;
 
-        for(int i=0; i<payerCount; i++)
+std::vector<std::pair<int,double>>
+pendingPayments;
+
+for(int i=0; i<payerCount; i++)
+{
+    int memberId;
+
+    std::cout
+        << "\nMember ID: ";
+
+    std::cin >> memberId;
+
+    bool validMember = false;
+
+    for(const auto& member : allMembers)
+    {
+        if(member.getGroupId() == groupId &&
+           member.getId() == memberId)
         {
-            int memberId;
-
-            double paidAmount;
-
-            std::cout
-                << "\nMember ID: ";
-
-            std::cin >> memberId;
-
-            if(usedPayers.count(memberId))
-            {
-                std::cout
-                    << "\nMember Already Added As Payer.\n";
-
-                i--;
-                continue;
-            }
-
-            usedPayers.insert(memberId);
-
-            std::cout
-                << "Amount Paid: ";
-
-            std::cin >> paidAmount;
-
-            paidSum += paidAmount;
-
-            expenseService.addPayment(
-                expenseId,
-                memberId,
-                paidAmount
-            );
+            validMember = true;
+            break;
         }
+    }
 
-    if(paidSum != totalAmount)
+    if(!validMember)
     {
         std::cout
-            << "\nWARNING:\n"
-            << "Total Paid = "
-            << paidSum
-            << "\nExpense Amount = "
-            << totalAmount
-            << "\n";
+            << "\nInvalid Member ID.\n";
+
+        i--;
+        continue;
     }
+
+    if(usedPayers.count(memberId))
+    {
+        std::cout
+            << "\nMember Already Added As Payer.\n";
+
+        i--;
+        continue;
+    }
+
+    usedPayers.insert(memberId);
+
+    double paidAmount;
+
+    std::cout
+        << "Amount Paid: ";
+
+    std::cin >> paidAmount;
+
+    if(paidAmount <= 0)
+    {
+        std::cout
+            << "\nAmount Must Be Greater Than Zero.\n";
+
+        usedPayers.erase(memberId);
+
+        i--;
+        continue;
+    }
+
+    paidSum += paidAmount;
+
+    pendingPayments.push_back(
+    {
+        memberId,
+        paidAmount
+    });
+}
+
+        if(paidSum != totalAmount)
+        {
+            std::cout
+                << "\nTransaction Cancelled.\n"
+                << "Total Paid Does Not Match Expense Amount.\n";
+
+            return;
+        }
+        int expenseId =
+    expenseService.createExpense(
+        groupId,
+        title,
+        totalAmount
+        );
+
+        for(const auto& payment :
+            pendingPayments)
+        {
+            expenseService.addPayment(
+                expenseId,
+                payment.first,
+                payment.second
+            );
+        }
 
     std::cout
         << "\nExpense Added Successfully\n";
