@@ -33,5 +33,8 @@ public:
     void addExpense(int groupId);
 
     void viewExpenses(int groupId);
+
     void viewBalances(int groupId);
+
+    void viewSettlements(int groupId);
 };

@@ -139,8 +139,9 @@ void Menu::manageGroup()
             << "4. Add Expense\n"
             << "5. View Expenses\n"
             << "6. View Balances\n"
+            << "7. View Settlements\n"
             << "\n"
-            << "7. Back\n"
+            << "8. Back\n"
             << "=================================\n"
             << "Choice: ";
 
@@ -170,8 +171,13 @@ void Menu::manageGroup()
             case 6:
                 viewBalances(groupId);
                 break;
-            case 7:
-                return;
+
+             case 7:
+                viewSettlements(groupId);
+                break;
+
+             case 8:
+                 return;
 
             default:
                 std::cout
@@ -195,6 +201,15 @@ void Menu::viewBalances(
 )
 {
     expenseService.viewBalances(
+        groupId,
+        memberService.getAllMembers()
+    );
+}
+void Menu::viewSettlements(
+    int groupId
+)
+{
+    expenseService.viewSettlements(
         groupId,
         memberService.getAllMembers()
     );
