@@ -462,4 +462,93 @@ void viewSettlements(
                     << "\nNo Expenses Found\n";
             }
         }
+    void viewDashboard(
+    int groupId,
+    const std::vector<Member>& members
+        )
+        {
+            auto expenses =
+                expenseRepo.getAllExpenses();
+
+            int memberCount = 0;
+
+            for(const auto& member : members)
+            {
+                if(member.getGroupId()
+                == groupId)
+                {
+                    memberCount++;
+                }
+            }
+
+            int expenseCount = 0;
+
+            double totalSpending = 0;
+
+            double largestAmount = 0;
+
+            std::string largestExpense =
+                "None";
+
+            for(const auto& expense : expenses)
+            {
+                if(expense.getGroupId()
+                != groupId)
+                {
+                    continue;
+                }
+
+                expenseCount++;
+
+                totalSpending +=
+                    expense.getAmount();
+
+                if(expense.getAmount()
+                > largestAmount)
+                {
+                    largestAmount =
+                        expense.getAmount();
+
+                    largestExpense =
+                        expense.getTitle();
+                }
+            }
+
+            double averageExpense = 0;
+
+            if(expenseCount > 0)
+            {
+                averageExpense =
+                    totalSpending
+                    / expenseCount;
+            }
+
+            std::cout
+                << "\n===== GROUP DASHBOARD =====\n";
+
+            std::cout
+                << "\nMembers : "
+                << memberCount;
+
+            std::cout
+                << "\nExpenses : "
+                << expenseCount;
+
+            std::cout
+                << "\nTotal Spending : ₹"
+                << totalSpending;
+
+            std::cout
+                << "\n\nLargest Expense :\n";
+
+            std::cout
+                << largestExpense
+                << " ₹"
+                << largestAmount;
+
+            std::cout
+                << "\n\nAverage Expense : ₹"
+                << averageExpense
+                << "\n";
+        }
 };

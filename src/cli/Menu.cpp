@@ -161,7 +161,8 @@ void Menu::manageGroup()
             << "7. View Balances\n"
             << "8. View Settlements\n"
             << "\n"
-            << "9. Back\n"
+            << "9. View Dashboard\n\n"
+            << "10. Exit Group\n"
             << "=================================\n"
             << "Choice: ";
 
@@ -199,8 +200,11 @@ void Menu::manageGroup()
             case 8:
                 viewSettlements(groupId);
                 break;
-
             case 9:
+                viewDashboard(groupId);
+                break;
+
+            case 10:
                 return;
 
             default:
@@ -236,6 +240,18 @@ void Menu::viewSettlements(
     expenseService.viewSettlements(
         groupId,
         memberService.getAllMembers()
+    );
+}
+void Menu::viewDashboard(
+    int groupId
+)
+{
+    auto members =
+        memberService.getAllMembers();
+
+    expenseService.viewDashboard(
+        groupId,
+        members
     );
 }
 void Menu::addExpense(

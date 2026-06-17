@@ -39,4 +39,6 @@ public:
     void viewBalances(int groupId);
 
     void viewSettlements(int groupId);
+
+    void viewDashboard(int groupId);
 };
