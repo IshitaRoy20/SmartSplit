@@ -41,4 +41,6 @@ public:
     void viewSettlements(int groupId);
 
     void viewDashboard(int groupId);
+
+    void deleteExpense(int groupId);
 };

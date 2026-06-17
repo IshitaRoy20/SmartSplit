@@ -44,3 +44,33 @@ std::vector<ExpensePayment> FileExpensePaymentRepository::getAllPayments()
 
     return payments;
 }
+void FileExpensePaymentRepository::
+deletePaymentsByExpenseId(
+    int expenseId
+)
+{
+    auto payments =
+        getAllPayments();
+
+    std::ofstream file(
+        "../data/expense_payments.txt"
+    );
+
+    for(const auto& payment :
+        payments)
+    {
+        if(payment.getExpenseId()
+           == expenseId)
+        {
+            continue;
+        }
+
+        file
+            << payment.getExpenseId()
+            << ","
+            << payment.getMemberId()
+            << ","
+            << payment.getAmountPaid()
+            << "\n";
+    }
+}

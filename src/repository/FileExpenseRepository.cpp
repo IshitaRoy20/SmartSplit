@@ -49,3 +49,34 @@ std::vector<Expense> FileExpenseRepository::getAllExpenses()
 
     return expenses;
 }
+void FileExpenseRepository::deleteExpense(
+    int expenseId
+)
+{
+    auto expenses =
+        getAllExpenses();
+
+    std::ofstream file(
+        "../data/expenses.txt"
+    );
+
+    for(const auto& expense :
+        expenses)
+    {
+        if(expense.getId()
+           == expenseId)
+        {
+            continue;
+        }
+
+        file
+            << expense.getId()
+            << ","
+            << expense.getGroupId()
+            << ","
+            << expense.getTitle()
+            << ","
+            << expense.getAmount()
+            << "\n";
+    }
+}

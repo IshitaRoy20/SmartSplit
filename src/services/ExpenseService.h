@@ -551,4 +551,24 @@ void viewSettlements(
                 << averageExpense
                 << "\n";
         }
+        void deleteExpense(
+        int expenseId
+        )
+        {
+            expenseRepo.deleteExpense(
+                expenseId
+            );
+
+            paymentRepo
+                .deletePaymentsByExpenseId(
+                    expenseId
+                );
+        }
+
+        std::vector<Expense>
+getAllExpenses()
+{
+    return expenseRepo
+        .getAllExpenses();
+}
 };

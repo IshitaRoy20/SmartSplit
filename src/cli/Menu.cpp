@@ -162,7 +162,8 @@ void Menu::manageGroup()
             << "8. View Settlements\n"
             << "\n"
             << "9. View Dashboard\n\n"
-            << "10. Exit Group\n"
+            << "10. Delete Expense\n\n"
+            << "11. Exit Group Workspace\n\n"
             << "=================================\n"
             << "Choice: ";
 
@@ -203,8 +204,11 @@ void Menu::manageGroup()
             case 9:
                 viewDashboard(groupId);
                 break;
-
             case 10:
+                deleteExpense(groupId);
+                break;
+
+            case 11:
                 return;
 
             default:
@@ -520,7 +524,59 @@ void Menu::viewMembers(int groupId)
         groupId
     );
 }
+void Menu::deleteExpense(
+    int groupId
+)
+{
+    auto expenses =
+        expenseService.getAllExpenses();
 
+    bool found = false;
+
+    std::cout
+        << "\n===== EXPENSES =====\n";
+
+    expenseService.viewExpenses(
+        groupId
+    );
+
+    int expenseId;
+
+    std::cout
+        << "\nEnter Expense ID: ";
+
+    std::cin
+        >> expenseId;
+
+    for(const auto& expense :
+        expenses)
+    {
+        if(expense.getGroupId()
+           == groupId
+           &&
+           expense.getId()
+           == expenseId)
+        {
+            found = true;
+            break;
+        }
+    }
+
+    if(!found)
+    {
+        std::cout
+            << "\nInvalid Expense ID\n";
+
+        return;
+    }
+
+    expenseService.deleteExpense(
+        expenseId
+    );
+
+    std::cout
+        << "\nExpense Deleted Successfully\n";
+}
 void Menu::removeMember(int groupId)
 {
     auto allMembers =
