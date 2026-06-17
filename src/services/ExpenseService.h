@@ -68,28 +68,38 @@ public:
         );
     }
 
-    void viewExpenses(
-        int groupId
-    )
-    {
-        auto expenses =
-            expenseRepo.getAllExpenses();
+void viewExpenses(
+    int groupId
+)
+{
+    auto expenses =
+        expenseRepo.getAllExpenses();
 
-        for(auto& expense : expenses)
+    bool found = false;
+
+    for(auto& expense : expenses)
+    {
+        if(expense.getGroupId()
+           == groupId)
         {
-            if(expense.getGroupId()
-               == groupId)
-            {
-                std::cout
-                    << expense.getId()
-                    << ". "
-                    << expense.getTitle()
-                    << " ₹"
-                    << expense.getAmount()
-                    << "\n";
-            }
+            found = true;
+
+            std::cout
+                << expense.getId()
+                << ". "
+                << expense.getTitle()
+                << " ₹"
+                << expense.getAmount()
+                << "\n";
         }
     }
+
+    if(!found)
+    {
+        std::cout
+            << "\nNo Expenses Found\n";
+    }
+}
 
     void viewBalances(
     int groupId,

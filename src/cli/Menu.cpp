@@ -65,11 +65,30 @@ void Menu::createGroup()
         name
     );
 
-    groupService.createGroup(name);
+            bool blank = true;
 
-    std::cout
-        << "\nGroup Created Successfully.\n";
-}
+            for(char ch : name)
+            {
+                if(!std::isspace(ch))
+                {
+                    blank = false;
+                    break;
+                }
+            }
+
+            if(blank)
+            {
+                std::cout
+                    << "\nGroup Name Cannot Be Empty.\n";
+
+                return;
+            }
+
+            groupService.createGroup(name);
+
+            std::cout
+                << "\nGroup Created Successfully.\n";
+            }
 
 void Menu::listGroups()
 {
@@ -262,6 +281,13 @@ void Menu::addExpense(
         << "Total Expense Amount: ";
 
     std::cin >> totalAmount;
+    if(totalAmount <= 0)
+    {
+        std::cout
+            << "\nExpense Amount Must Be Positive.\n";
+
+        return;
+    }
 
     std::cout
         << "\n===== MEMBERS =====\n";
@@ -296,40 +322,40 @@ void Menu::addExpense(
 
        double paidSum = 0;
 
-std::set<int> usedPayers;
+    std::set<int> usedPayers;
 
-std::vector<std::pair<int,double>>
-pendingPayments;
+    std::vector<std::pair<int,double>>
+    pendingPayments;
 
-for(int i=0; i<payerCount; i++)
-{
-    int memberId;
-
-    std::cout
-        << "\nMember ID: ";
-
-    std::cin >> memberId;
-
-    bool validMember = false;
-
-    for(const auto& member : allMembers)
+    for(int i=0; i<payerCount; i++)
     {
-        if(member.getGroupId() == groupId &&
-           member.getId() == memberId)
-        {
-            validMember = true;
-            break;
-        }
-    }
+        int memberId;
 
-    if(!validMember)
-    {
         std::cout
-            << "\nInvalid Member ID.\n";
+            << "\nMember ID: ";
 
-        i--;
-        continue;
-    }
+        std::cin >> memberId;
+
+        bool validMember = false;
+
+        for(const auto& member : allMembers)
+        {
+            if(member.getGroupId() == groupId &&
+            member.getId() == memberId)
+            {
+                validMember = true;
+                break;
+            }
+        }
+
+        if(!validMember)
+        {
+            std::cout
+                << "\nInvalid Member ID.\n";
+
+            i--;
+            continue;
+        }
 
     if(usedPayers.count(memberId))
     {
@@ -411,6 +437,36 @@ void Menu::addMember(int groupId)
         std::cin,
         name
     );
+        bool blank = true;
+
+        for(char ch : name)
+        {
+            if(!std::isspace(ch))
+            {
+                blank = false;
+                break;
+            }
+        }
+
+        if(blank)
+        {
+            std::cout
+                << "\nMember Name Cannot Be Empty.\n";
+
+            return;
+        }
+        if(
+    memberService.memberExists(
+        groupId,
+        name
+         )
+        )
+        {
+            std::cout
+                << "\nMember Already Exists.\n";
+
+            return;
+        }
 
     memberService.addMember(
         groupId,

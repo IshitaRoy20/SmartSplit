@@ -81,7 +81,26 @@ public:
         );
     }
     std::vector<Member> getAllMembers()
-{
-    return repository.getAllMembers();
-}
+    {
+        return repository.getAllMembers();
+    }
+bool memberExists(
+    int groupId,
+    const std::string& name
+)
+    {
+        auto members =
+            repository.getAllMembers();
+
+        for(const auto& member : members)
+        {
+            if(member.getGroupId() == groupId &&
+            member.getName() == name)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 };
