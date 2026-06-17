@@ -1,5 +1,5 @@
 📌 SmartSplit
-
+------------------------------
 A modular C++17 CLI-based distributed-style expense management system designed to simulate real-world bill splitting and settlement optimization. The system supports group-based expense tracking, multi-party payments, and computes net balances using a graph-inspired settlement minimization algorithm to reduce the number of transactions required to settle debts.
 
 SmartSplit follows a layered architecture (CLI → Service → Repository) with persistent file-based storage, emphasizing separation of concerns, deterministic financial computation, and extensible backend design.
@@ -9,25 +9,25 @@ SmartSplit follows a layered architecture (CLI → Service → Repository) with 
 🧑‍🤝‍🧑 Group-Based Context Isolation
 Each group acts as an isolated financial domain
 Supports independent expense graphs per group
-------
+
 💰 Multi-Source Expense Modeling
 Supports multiple payers per expense
 Models expense contributions as weighted edges:
 Member → Expense → Contribution Weight
-------
+
 📊 Deterministic Balance Computation Engine
 Computes net balance per member using:
 Total paid amount aggregation
 Equal distribution assumption per expense
 Implements a balance mapping structure (unordered_map) for O(n) aggregation
-------
+
 ⚖️ Transaction Minimization (Greedy Settlement Engine)
 Converts net balances into:
 Creditors (positive balance)
 Debtors (negative balance)
 Uses a two-pointer greedy matching algorithm to minimize settlement count
 Instead of O(n²) pairwise settlements → O(n log n) greedy resolution
-------
+
 📂 Persistent Storage Layer (File-Based DB Simulation)
 Flat-file storage system simulating relational persistence:
 groups.txt
@@ -42,7 +42,7 @@ CLI Layer (Menu System)
 Service Layer (Business Logic Engine)
         ↓
 Repository Layer (File I/O Abstraction)
------------------------------------------
+
 Design Principles:
 -----------------------------------------
 Separation of concerns
@@ -95,6 +95,7 @@ SmartSplit/
 └── main.cpp
 
 ⚙️ How to Run SmartSplit
+--------------------------------
 🔧 Prerequisites
 
 Make sure you have:
@@ -156,6 +157,7 @@ If you see file errors, ensure data/ exists at project root
 All data is persisted using file-based storage (no database required)
 
 🔬 Technical Highlights
+------------------------------------
 Designed a file-based persistence engine simulating relational storage
 Built a debt resolution system using greedy graph reduction
 Implemented multi-party transaction normalization
@@ -164,6 +166,7 @@ Ensured deterministic financial computation with aggregation maps
 Developed CLI-based stateful workspace navigation system
 
 🔮 Future Enhancements
+----------------------------------------
 Percentage-based and weighted split system (dynamic allocation engine)
 SQLite migration (relational persistence upgrade)
 Role-based access control (RBAC model for groups)
