@@ -38,13 +38,13 @@ Implements append + rewrite strategy for CRUD consistency
 
 🏗️ Layered Architecture Design
 ------------------------------------
+```
 CLI Layer (Menu System)
-
         ↓
 Service Layer (Business Logic Engine)
-
         ↓
 Repository Layer (File I/O Abstraction)
+```
 
 Design Principles:
 -----------------------------------------
@@ -70,6 +70,7 @@ Settlement suggestion engine (debt graph reduction)
 
 File-based persistence ensuring state recovery
 📁 Project Architecture
+```
 SmartSplit/
 │
 ├── cli/
@@ -96,6 +97,7 @@ SmartSplit/
 │   ├── *.txt (persistent storage layer)
 │
 └── main.cpp
+```
 
 ⚙️ How to Run SmartSplit
 --------------------------------
