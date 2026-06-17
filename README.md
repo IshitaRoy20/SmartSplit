@@ -35,8 +35,9 @@ members.txt
 expenses.txt
 expense_payments.txt
 Implements append + rewrite strategy for CRUD consistency
-------------------------------------------
+
 🏗️ Layered Architecture Design
+------------------------------------
 CLI Layer (Menu System)
         ↓
 Service Layer (Business Logic Engine)
