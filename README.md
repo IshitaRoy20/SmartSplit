@@ -39,8 +39,10 @@ Implements append + rewrite strategy for CRUD consistency
 🏗️ Layered Architecture Design
 ------------------------------------
 CLI Layer (Menu System)
+
         ↓
 Service Layer (Business Logic Engine)
+
         ↓
 Repository Layer (File I/O Abstraction)
 
