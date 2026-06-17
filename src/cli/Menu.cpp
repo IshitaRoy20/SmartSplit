@@ -157,10 +157,11 @@ void Menu::manageGroup()
             << "\n"
             << "4. Add Expense\n"
             << "5. View Expenses\n"
-            << "6. View Balances\n"
-            << "7. View Settlements\n"
+            << "6. View Expense Details\n\n"
+            << "7. View Balances\n"
+            << "8. View Settlements\n"
             << "\n"
-            << "8. Back\n"
+            << "9. Back\n"
             << "=================================\n"
             << "Choice: ";
 
@@ -188,15 +189,19 @@ void Menu::manageGroup()
                 viewExpenses(groupId);
                 break;
             case 6:
+                viewExpenseDetails(groupId);
+                break;
+
+            case 7:
                 viewBalances(groupId);
                 break;
 
-             case 7:
+            case 8:
                 viewSettlements(groupId);
                 break;
 
-             case 8:
-                 return;
+            case 9:
+                return;
 
             default:
                 std::cout
@@ -393,7 +398,7 @@ void Menu::addExpense(
         memberId,
         paidAmount
     });
-}
+    }
 
         if(paidSum != totalAmount)
         {
@@ -422,6 +427,19 @@ void Menu::addExpense(
 
     std::cout
         << "\nExpense Added Successfully\n";
+}
+
+void Menu::viewExpenseDetails(
+    int groupId
+)
+{
+    auto members =
+        memberService.getAllMembers();
+
+    expenseService.viewExpenseDetails(
+        groupId,
+        members
+    );
 }
 
 void Menu::addMember(int groupId)

@@ -380,4 +380,86 @@ void viewSettlements(
                 << "No Settlements Required.\n";
         }
     }
+     void viewExpenseDetails(
+      int groupId,
+        const std::vector<Member>& members
+        )
+        {
+            auto expenses =
+                expenseRepo.getAllExpenses();
+
+            auto payments =
+                paymentRepo.getAllPayments();
+
+            bool found = false;
+
+            for(const auto& expense : expenses)
+            {
+                if(expense.getGroupId() != groupId)
+                {
+                    continue;
+                }
+
+                found = true;
+
+                std::cout
+                    << "\n---------------------\n";
+
+                std::cout
+                    << "Expense ID: "
+                    << expense.getId()
+                    << "\n";
+
+                std::cout
+                    << "Title: "
+                    << expense.getTitle()
+                    << "\n";
+
+                std::cout
+                    << "Amount: ₹"
+                    << expense.getAmount()
+                    << "\n";
+
+                std::cout
+                    << "\nPayments:\n";
+
+                for(const auto& payment : payments)
+                {
+                    if(payment.getExpenseId()
+                    != expense.getId())
+                    {
+                        continue;
+                    }
+
+                    std::string memberName =
+                        "Unknown";
+
+                    for(const auto& member :
+                        members)
+                    {
+                        if(member.getId()
+                        ==
+                        payment.getMemberId())
+                        {
+                            memberName =
+                                member.getName();
+
+                            break;
+                        }
+                    }
+
+                    std::cout
+                        << memberName
+                        << " ₹"
+                        << payment.getAmountPaid()
+                        << "\n";
+                }
+            }
+
+            if(!found)
+            {
+                std::cout
+                    << "\nNo Expenses Found\n";
+            }
+        }
 };
