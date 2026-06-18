@@ -469,6 +469,8 @@ void viewSettlements(
         {
             auto expenses =
                 expenseRepo.getAllExpenses();
+            auto payments =
+                paymentRepo.getAllPayments();
 
             int memberCount = 0;
 
@@ -489,6 +491,11 @@ void viewSettlements(
 
             std::string largestExpense =
                 "None";
+                std::unordered_map<int,double>
+                contributionMap;
+
+            std::unordered_map<int,int>
+                paymentFrequency;
 
             for(const auto& expense : expenses)
             {
@@ -513,6 +520,16 @@ void viewSettlements(
                         expense.getTitle();
                 }
             }
+            for(const auto& payment : payments)
+            {
+                contributionMap[
+                    payment.getMemberId()
+                ] += payment.getAmountPaid();
+
+                paymentFrequency[
+                    payment.getMemberId()
+                ]++;
+            }
 
             double averageExpense = 0;
 
@@ -522,35 +539,110 @@ void viewSettlements(
                     totalSpending
                     / expenseCount;
             }
+            double maxContribution = 0;
 
-            std::cout
-                << "\n===== GROUP DASHBOARD =====\n";
+        std::string topContributor =
+            "None";
 
-            std::cout
-                << "\nMembers : "
-                << memberCount;
+        for(const auto& member : members)
+        {
+            if(member.getGroupId()
+            != groupId)
+            {
+                continue;
+            }
 
-            std::cout
-                << "\nExpenses : "
-                << expenseCount;
+            if(
+                contributionMap[
+                    member.getId()
+                ]
+                >
+                maxContribution
+            )
+            {
+                maxContribution =
+                    contributionMap[
+                        member.getId()
+                    ];
 
-            std::cout
-                << "\nTotal Spending : ₹"
-                << totalSpending;
-
-            std::cout
-                << "\n\nLargest Expense :\n";
-
-            std::cout
-                << largestExpense
-                << " ₹"
-                << largestAmount;
-
-            std::cout
-                << "\n\nAverage Expense : ₹"
-                << averageExpense
-                << "\n";
+                topContributor =
+                    member.getName();
+            }
         }
+        int maxFrequency = 0;
+
+        std::string frequentPayer =
+            "None";
+
+        for(const auto& member : members)
+        {
+            if(member.getGroupId()
+            != groupId)
+            {
+                continue;
+            }
+
+            if(
+                paymentFrequency[
+                    member.getId()
+                ]
+                >
+                maxFrequency
+            )
+            {
+                maxFrequency =
+                    paymentFrequency[
+                        member.getId()
+                    ];
+
+                frequentPayer =
+                    member.getName();
+            }
+        }
+
+           std::cout
+                    << "\n=================================\n"
+                    << "         DASHBOARD\n"
+                    << "=================================\n";
+
+                std::cout
+                    << "\nMembers : "
+                    << memberCount;
+
+                std::cout
+                    << "\nExpenses : "
+                    << expenseCount;
+
+                std::cout
+                    << "\nTotal Spending : ₹"
+                    << totalSpending;
+
+                std::cout
+                    << "\nAverage Expense : ₹"
+                    << averageExpense;
+
+                std::cout
+                    << "\n\nLargest Expense : "
+                    << largestExpense
+                    << " ₹"
+                    << largestAmount;
+
+                std::cout
+                    << "\n\nTop Contributor : "
+                    << topContributor
+                    << " ₹"
+                    << maxContribution;
+
+                std::cout
+                    << "\nMost Frequent Payer : "
+                    << frequentPayer
+                    << " ("
+                    << maxFrequency
+                    << " payments)";
+
+                std::cout
+                    << "\n=================================\n";
+    }
         void deleteExpense(
         int expenseId
         )
