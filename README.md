@@ -1,80 +1,245 @@
-📌 SmartSplit
-------------------------------
-A modular C++17 CLI-based distributed-style expense management system designed to simulate real-world bill splitting and settlement optimization. The system supports group-based expense tracking, multi-party payments, and computes net balances using a graph-inspired settlement minimization algorithm to reduce the number of transactions required to settle debts.
+# 🚀 SmartSplit — Expense Sharing, Debt Optimization & Financial Settlement Engine
 
-SmartSplit follows a layered architecture (CLI → Service → Repository) with persistent file-based storage, emphasizing separation of concerns, deterministic financial computation, and extensible backend design.
+SmartSplit is a modular C++ financial management system that goes beyond traditional expense splitting by combining **expense tracking, balance reconciliation, debt settlement optimization, contribution analytics, and financial integrity validation** into a single CLI application.
 
-🚀 Key Technical Features
------------------------------
-🧑‍🤝‍🧑 Group-Based Context Isolation
-Each group acts as an isolated financial domain
-Supports independent expense graphs per group
+Unlike basic bill-splitting applications that merely record expenses, SmartSplit computes real-time financial obligations between group members, minimizes settlement transactions, enforces consistency constraints, and provides analytical insights into spending behavior and contribution patterns.
 
-💰 Multi-Source Expense Modeling
-Supports multiple payers per expense
-Models expense contributions as weighted edges:
-Member → Expense → Contribution Weight
+---
 
-📊 Deterministic Balance Computation Engine
-Computes net balance per member using:
-Total paid amount aggregation
-Equal distribution assumption per expense
-Implements a balance mapping structure (unordered_map) for O(n) aggregation
+## 🎯 Why SmartSplit?
 
-⚖️ Transaction Minimization (Greedy Settlement Engine)
-Converts net balances into:
-Creditors (positive balance)
-Debtors (negative balance)
-Uses a two-pointer greedy matching algorithm to minimize settlement count
-Instead of O(n²) pairwise settlements → O(n log n) greedy resolution
+Most expense-sharing applications answer:
 
-📂 Persistent Storage Layer (File-Based DB Simulation)
-Flat-file storage system simulating relational persistence:
-groups.txt
-members.txt
-expenses.txt
-expense_payments.txt
-Implements append + rewrite strategy for CRUD consistency
+> "Who paid how much?"
 
-🏗️ Layered Architecture Design
-------------------------------------
+SmartSplit answers:
+
+> "Who actually owes whom, by how much, and what is the minimum number of transactions required to settle everything?"
+
+The system transforms raw payment records into an optimized settlement network, helping groups settle debts efficiently while preserving complete financial history.
+
+---
+
+# ✨ Core Capabilities
+
+## 👥 Group Lifecycle Management
+
+Create and manage multiple independent expense groups.
+
+Examples:
+
+* College roommates
+* Trip planning groups
+* Office teams
+* Event organizers
+* Shared apartment expenses
+
+Features:
+
+* Group creation
+* Group isolation
+* Group-specific expense tracking
+* Independent financial ledgers
+
+---
+
+## 🧑‍🤝‍🧑 Member Management Engine
+
+SmartSplit maintains group membership while enforcing financial integrity.
+
+### Implemented Safeguards
+
+✅ Duplicate member prevention
+
+✅ Empty-input validation
+
+✅ Invalid member detection
+
+✅ Invalid group protection
+
+✅ Debt-aware member removal
+
+A member cannot be removed if unresolved financial obligations still exist within the group.
+
+---
+
+## 💰 Multi-Payer Expense Processing
+
+Unlike many beginner expense trackers, SmartSplit supports **multiple contributors for a single expense**.
+
+Example:
+
+Restaurant Bill ₹3000
+
+Rahul paid ₹2000
+
+Priya paid ₹1000
+
+SmartSplit records the payment distribution and incorporates it into future settlement calculations.
+
+---
+
+## 🧾 Expense Ledger System
+
+Every expense is permanently recorded and remains available for inspection.
+
+Stored information includes:
+
+* Expense ID
+* Title
+* Amount
+* Contributors
+* Contribution amounts
+
+Users can:
+
+* Add expenses
+* View expenses
+* Inspect expense details
+* Delete expenses
+
+---
+
+# ⚡ Financial Reconciliation Engine
+
+The heart of SmartSplit.
+
+For every group, the system continuously computes:
+
+```text
+Net Balance =
+Total Amount Paid
+−
+Fair Share Of Expenses
 ```
-CLI Layer (Menu System)
-        ↓
-Service Layer (Business Logic Engine)
-        ↓
-Repository Layer (File I/O Abstraction)
+
+This instantly identifies:
+
+* Creditors (members owed money)
+* Debtors (members who owe money)
+
+The result is a live financial state for the entire group.
+
+---
+
+# 🧠 Debt Settlement Optimization
+
+One of SmartSplit's strongest features.
+
+Instead of producing a large number of redundant repayments, SmartSplit performs settlement minimization using a creditor-debtor matching strategy.
+
+### Example
+
+💡 Settlement Optimization Example
+
+```
+Before Optimization:
+
+Rahul → Amit  ₹500
+Rahul → Priya ₹300
+Karan → Amit  ₹400
+Karan → Priya ₹200
+Neha  → Amit  ₹100
+Neha  → Priya ₹500
+
+Transactions Required: 6
+
+After SmartSplit Optimization:
+
+Rahul → Amit  ₹800
+Karan → Priya ₹600
+Neha  → Amit  ₹200
+Neha  → Priya ₹400
+
+Transactions Required: 4
+
+📉 Transaction Reduction: 33.33%
 ```
 
-Design Principles:
------------------------------------------
-Separation of concerns
-Dependency isolation via repository abstraction
-Stateless service computation per request cycle
-🧠 Core Algorithmic Concepts Used
-1. Balance Sheet Construction
-Uses hash maps for O(1) updates per member
-2. Settlement Optimization (Greedy Matching)
-Splits users into:
-Creditors list
-Debtors list
-Matches iteratively to reduce transaction graph edges
-3. Expense Normalization
-Converts multi-payer contributions into normalized ledger entries
-⚙️ System Capabilities
-Group lifecycle management (create/list/select)
-Member CRUD with validation layer
-Expense creation with multi-payer allocation
-Real-time balance computation
-Settlement suggestion engine (debt graph reduction)
+The system automatically generates a minimal settlement plan from the balance graph.
 
-File-based persistence ensuring state recovery
-📁 Project Architecture
+---
+
+# 📊 Settlement Analytics
+
+SmartSplit doesn't just generate settlements.
+
+It evaluates their efficiency.
+
+Metrics include:
+
+* Number of debtors
+* Number of creditors
+* Potential transaction count
+* Optimized transaction count
+* Transaction reduction percentage
+
+This transforms settlement generation from a simple output feature into an algorithmic optimization problem.
+
+---
+
+# 📈 Financial Intelligence Dashboard
+
+SmartSplit provides high-level financial analytics for every group.
+
+### Dashboard Metrics
+
+👥 Total Members
+
+🧾 Total Expenses
+
+💵 Total Group Spending
+
+📊 Average Expense Value
+
+🏆 Largest Expense Recorded
+
+🥇 Top Contributor
+
+🔥 Most Frequent Payer
+
+These metrics provide a quick snapshot of the group's financial activity.
+
+---
+
+# 🛡️ Data Integrity & Validation Layer
+
+A major focus of the project was preventing invalid financial states.
+
+Implemented validations include:
+
+* Invalid group IDs
+* Invalid member IDs
+* Duplicate payers
+* Negative payments
+* Invalid payer counts
+* Empty names
+* Duplicate members
+* Expense-payment mismatch detection
+* Outstanding debt protection
+
+An expense is rejected if:
+
+```text
+Total Paid
+≠
+Expense Amount
 ```
+
+preventing ghost transactions and inconsistent ledger states.
+
+---
+
+# 🏗️ Software Architecture
+
+SmartSplit was designed using layered architecture principles to maintain separation of concerns and future scalability.
+
+```text
 SmartSplit/
 │
 ├── cli/
-│   └── Menu.cpp / Menu.h
+│   ├── Menu.cpp
+│   └── Menu.h
 │
 ├── services/
 │   ├── GroupService
@@ -94,86 +259,100 @@ SmartSplit/
 │   └── ExpensePayment
 │
 ├── data/
-│   ├── *.txt (persistent storage layer)
+│   ├── groups.txt
+│   ├── members.txt
+│   ├── expenses.txt
+│   └── expense_payments.txt
 │
 └── main.cpp
 ```
 
-⚙️ How to Run SmartSplit
---------------------------------
-🔧 Prerequisites
+---
 
-Make sure you have:
+# 🧩 Design Patterns & Concepts Demonstrated
 
-C++17 or higher compiler (g++ recommended)
-CMake (version 3.10+ recommended)
-Linux / WSL / macOS (Windows via MinGW also works)
-📁 Build Instructions
+### Repository Pattern
 
-From the project root directory:
+Abstracts storage operations from business logic.
 
+### Layered Architecture
+
+CLI → Services → Repositories → Persistence
+
+### Object-Oriented Design
+
+Encapsulation of:
+
+* Groups
+* Members
+* Expenses
+* Payments
+
+### Financial State Modeling
+
+Represents real-world debt relationships using computed balances.
+
+### Greedy Optimization
+
+Used for settlement minimization and transaction reduction.
+
+### Data Validation Pipelines
+
+Protects the application from invalid financial states.
+
+---
+
+# ⚙️ Technologies
+
+* C++17
+* STL
+* CMake
+* File-Based Persistence
+* Object-Oriented Programming
+
+---
+
+# 🚀 Running SmartSplit
+
+### Build
+
+```bash
 mkdir build
 cd build
 cmake ..
 make
-▶️ Run the Application
+```
 
-After successful build:
+### Run
 
+```bash
 ./SmartSplit
-📂 Data Directory Setup
+```
 
-Ensure the following folder exists at project root:
+---
 
-data/
+# 💡 What Makes This Project Stand Out?
 
-And it should contain (auto-created if empty, otherwise manually ensure files exist):
+SmartSplit is not a CRUD application.
 
-groups.txt
-members.txt
-expenses.txt
-expense_payments.txt
+It combines:
 
-💡 Example Flow
+✅ Financial reconciliation
 
-Once the program starts:
-1. Create Group
-2. Manage Group
-3. List Groups
-4. Exit
+✅ Debt optimization
 
-Inside a group:
+✅ Settlement generation
 
-1. Add Member
-2. View Members
-3. Remove Member
-4. Add Expense
-5. View Expenses
-6. View Expense Details
-7. View Balances
-8. View Settlements
-9. Dashboard
-10. Delete Expense
-11. Back
+✅ Contribution analytics
 
-⚠️ Notes
-Run from build/ directory only (important for relative paths like ../data/)
-If you see file errors, ensure data/ exists at project root
-All data is persisted using file-based storage (no database required)
+✅ Ledger management
 
-🔬 Technical Highlights
-------------------------------------
-Designed a file-based persistence engine simulating relational storage
-Built a debt resolution system using greedy graph reduction
-Implemented multi-party transaction normalization
-Applied layered architecture with service-repository separation
-Ensured deterministic financial computation with aggregation maps
-Developed CLI-based stateful workspace navigation system
+✅ Validation-driven workflows
 
-🔮 Future Enhancements
-----------------------------------------
-Percentage-based and weighted split system (dynamic allocation engine)
-SQLite migration (relational persistence upgrade)
-Role-based access control (RBAC model for groups)
-Audit logging system (event sourcing style ledger)
-Advanced settlement optimization using graph cycle reduction (min-cash-flow problem)
+✅ Repository-based architecture
+
+✅ Persistent storage
+
+The project demonstrates how software engineering principles can be applied to solve real-world financial coordination problems while maintaining clean architecture, modularity, and extensibility.
+
+In short, SmartSplit behaves less like a simple expense tracker and more like a lightweight financial settlement engine.
