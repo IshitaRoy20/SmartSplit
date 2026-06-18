@@ -282,6 +282,9 @@ void viewSettlements(
         std::vector<Person>
             debtors;
 
+        int optimizedTransactions =
+            0;
+
         for(const auto& member : members)
         {
             if(member.getGroupId()
@@ -312,9 +315,26 @@ void viewSettlements(
                 });
             }
         }
+                int rawTransactions =
+            debtors.size()
+            *
+            creditors.size();
 
         std::cout
-            << "\n===== SETTLEMENTS =====\n";
+    << "\n===== SETTLEMENT ANALYSIS =====\n";
+
+std::cout
+    << "\nDebtors : "
+    << debtors.size();
+
+std::cout
+    << "\nCreditors : "
+    << creditors.size();
+
+std::cout
+    << "\nPotential Transactions : "
+    << rawTransactions;
+std::cout<<"\n---------------------\n";
 
         int i = 0;
         int j = 0;
@@ -359,6 +379,7 @@ void viewSettlements(
                 << "\n";
 
             found = true;
+            optimizedTransactions++;
 
             debtors[i].amount -= amount;
             creditors[j].amount -= amount;
@@ -379,6 +400,33 @@ void viewSettlements(
             std::cout
                 << "No Settlements Required.\n";
         }
+            else
+            {
+                double reduction = 0;
+
+                if(rawTransactions > 0)
+                {
+                    reduction =
+                        (
+                            rawTransactions
+                            -
+                            optimizedTransactions
+                        )
+                        *
+                        100.0
+                        /
+                        rawTransactions;
+                }
+
+                std::cout
+                    << "\n\nOptimized Transactions : "
+                    << optimizedTransactions;
+
+                std::cout
+                    << "\nTransaction Reduction : "
+                    << reduction
+                    << "%\n";
+            }
     }
      void viewExpenseDetails(
       int groupId,
@@ -658,9 +706,59 @@ void viewSettlements(
         }
 
         std::vector<Expense>
-getAllExpenses()
+        getAllExpenses()
+        {
+            return expenseRepo
+                .getAllExpenses();
+        }
+double getMemberBalance(
+    int groupId,
+    int memberId,
+    const std::vector<Member>& members
+)
 {
-    return expenseRepo
-        .getAllExpenses();
+    auto expenses =
+        expenseRepo.getAllExpenses();
+
+    auto payments =
+        paymentRepo.getAllPayments();
+
+    double balance = 0;
+
+    for(const auto& payment : payments)
+    {
+        if(payment.getMemberId()
+           == memberId)
+        {
+            balance +=
+                payment.getAmountPaid();
+        }
+    }
+
+    int memberCount = 0;
+
+    for(const auto& member : members)
+    {
+        if(member.getGroupId()
+           == groupId)
+        {
+            memberCount++;
+        }
+    }
+
+    for(const auto& expense : expenses)
+    {
+        if(expense.getGroupId()
+           != groupId)
+        {
+            continue;
+        }
+
+        balance -=
+            expense.getAmount()
+            / memberCount;
+    }
+
+    return balance;
 }
 };

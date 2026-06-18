@@ -158,12 +158,12 @@ void Menu::manageGroup()
             << "4. Add Expense\n"
             << "5. View Expenses\n"
             << "6. View Expense Details\n\n"
-            << "7. View Balances\n"
-            << "8. View Settlements\n"
+            //<< "7. View Balances\n"
+            << "7. View Settlements\n"
             << "\n"
-            << "9. View Dashboard\n\n"
-            << "10. Delete Expense\n\n"
-            << "11. Exit Group Workspace\n\n"
+            << "8. View Dashboard\n\n"
+            << "9. Delete Expense\n\n"
+            << "10. Exit Group Workspace\n\n"
             << "=================================\n"
             << "Choice: ";
 
@@ -194,21 +194,21 @@ void Menu::manageGroup()
                 viewExpenseDetails(groupId);
                 break;
 
-            case 7:
+            /*case 7:
                 viewBalances(groupId);
-                break;
+                break;*/
 
-            case 8:
+            case 7:
                 viewSettlements(groupId);
                 break;
-            case 9:
+            case 8:
                 viewDashboard(groupId);
                 break;
-            case 10:
+            case 9:
                 deleteExpense(groupId);
                 break;
 
-            case 11:
+            case 10:
                 return;
 
             default:
@@ -634,7 +634,24 @@ void Menu::removeMember(int groupId)
 
         return;
     }
+    double balance =
+    expenseService.getMemberBalance(
+        groupId,
+        memberId,
+        allMembers
+            );
 
+        if(balance > 0.01
+        ||
+        balance < -0.01)
+        {
+            std::cout
+                << "\nCannot Remove Member.\n"
+                << "Member Has Pending Debt "
+                << "Settle Balances First.\n";
+
+            return;
+        }
     memberService.removeMember(
         memberId
     );
