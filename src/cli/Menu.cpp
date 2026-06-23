@@ -1,26 +1,111 @@
-#include "Menu.h"
+#include "../include/cli/Menu.h"
+#include "../include/utilities/ANSIColor.h"
+#include "../include/utilities/InputValidator.h"
 #include <set>
 #include <iostream>
-#include <limits>
+
+int Menu::getMainMenuChoice()
+{
+    Colors::separator();
+    std::cout << Colors::format("          SMARTSPLIT", Colors::BRIGHT_CYAN) << std::endl;
+    Colors::separator();
+    std::cout << Colors::format("1. Create Group", Colors::GREEN) << std::endl;
+    std::cout << Colors::format("2. Manage Group", Colors::CYAN) << std::endl;
+    std::cout << Colors::format("3. List Groups", Colors::BLUE) << std::endl;
+    std::cout << Colors::format("4. Exit", Colors::RED) << std::endl;
+    Colors::separator();
+
+    return InputValidator::getIntInRange("Enter Choice: ", 1, 4);
+}
+
+int Menu::getGroupMenuChoice()
+{
+    Colors::separator();
+    std::cout << Colors::format("       GROUP WORKSPACE", Colors::BRIGHT_CYAN) << std::endl;
+    Colors::separator();
+    std::cout << Colors::format("1. Add Member", Colors::GREEN) << std::endl;
+    std::cout << Colors::format("2. View Members", Colors::CYAN) << std::endl;
+    std::cout << Colors::format("3. Remove Member", Colors::RED) << std::endl;
+    std::cout << std::endl;
+    std::cout << Colors::format("4. Add Expense", Colors::GREEN) << std::endl;
+    std::cout << Colors::format("5. View Expenses", Colors::CYAN) << std::endl;
+    std::cout << Colors::format("6. View Expense Details", Colors::CYAN) << std::endl;
+    std::cout << std::endl;
+    std::cout << Colors::format("7. View Settlements", Colors::YELLOW) << std::endl;
+    std::cout << Colors::format("8. View Dashboard", Colors::YELLOW) << std::endl;
+    std::cout << std::endl;
+    std::cout << Colors::format("9. Delete Expense", Colors::RED) << std::endl;
+    std::cout << Colors::format("10. Exit Group Workspace", Colors::RED) << std::endl;
+    Colors::separator();
+
+    return InputValidator::getIntInRange("Choice: ", 1, 10);
+}
+
+bool Menu::isValidGroup(int groupId, const std::vector<Group>& groups)
+{
+    for(const auto& group : groups)
+    {
+        if(group.getId() == groupId)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Menu::isValidGroupMember(
+    int groupId,
+    int memberId,
+    const std::vector<Member>& allMembers
+)
+{
+    for(const auto& member : allMembers)
+    {
+        if(member.getGroupId() == groupId && member.getId() == memberId)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+std::vector<Member> Menu::getGroupMembers(
+    int groupId,
+    const std::vector<Member>& allMembers
+)
+{
+    std::vector<Member> groupMembers;
+    for(const auto& member : allMembers)
+    {
+        if(member.getGroupId() == groupId)
+        {
+            groupMembers.push_back(member);
+        }
+    }
+    return groupMembers;
+}
+
+bool Menu::isValidExpense(
+    int groupId,
+    int expenseId,
+    const std::vector<Expense>& allExpenses
+)
+{
+    for(const auto& expense : allExpenses)
+    {
+        if(expense.getGroupId() == groupId && expense.getId() == expenseId)
+        {
+            return true;
+        }
+    }
+    return false;
+}
 
 void Menu::run()
 {
-    int choice;
-
     while(true)
     {
-        std::cout
-            << "\n=================================\n"
-            << "          SMARTSPLIT\n"
-            << "=================================\n"
-            << "1. Create Group\n"
-            << "2. Manage Group\n"
-            << "3. List Groups\n"
-            << "4. Exit\n"
-            << "=================================\n"
-            << "Enter Choice: ";
-
-        std::cin >> choice;
+        int choice = getMainMenuChoice();
 
         switch(choice)
         {
@@ -37,137 +122,55 @@ void Menu::run()
                 break;
 
             case 4:
-                std::cout
-                    << "\nThank you for using SmartSplit!\n";
+                Colors::success("Thank you for using SmartSplit!");
                 return;
-
-            default:
-                std::cout
-                    << "\nInvalid Choice.\n";
         }
     }
 }
 
 void Menu::createGroup()
 {
-    std::string name;
+    Colors::header("\n📋 CREATE GROUP");
 
-    std::cin.ignore(
-        std::numeric_limits<std::streamsize>::max(),
-        '\n'
+    std::string name = InputValidator::getValidString(
+        "Enter Group Name: ",
+        "Group Name Cannot Be Empty."
     );
 
-    std::cout
-        << "\nEnter Group Name: ";
-
-    std::getline(
-        std::cin,
-        name
-    );
-
-            bool blank = true;
-
-            for(char ch : name)
-            {
-                if(!std::isspace(ch))
-                {
-                    blank = false;
-                    break;
-                }
-            }
-
-            if(blank)
-            {
-                std::cout
-                    << "\nGroup Name Cannot Be Empty.\n";
-
-                return;
-            }
-
-            groupService.createGroup(name);
-
-            std::cout
-                << "\nGroup Created Successfully.\n";
-            }
+    groupService.createGroup(name);
+    Colors::success("Group Created Successfully!");
+}
 
 void Menu::listGroups()
 {
-    std::cout
-        << "\n===== GROUPS =====\n";
-
+    Colors::header("\n📋 GROUPS");
     groupService.listGroups();
 }
 
 void Menu::manageGroup()
 {
-        auto groups =
-            groupService.getAllGroups();
+    auto groups = groupService.getAllGroups();
 
-        if(groups.empty())
-        {
-            std::cout
-                << "\nNo Groups Exist.\n"
-                << "Create a Group First.\n";
-
-            return;
-        }
-
-        int groupId;
-
-        std::cout
-            << "\n===== AVAILABLE GROUPS =====\n";
-
-        groupService.listGroups();
-
-        std::cout
-            << "\nEnter Group ID: ";
-
-        std::cin >> groupId;
-
-        bool validGroup = false;
-
-        for(const auto& group : groups)
-        {
-            if(group.getId() == groupId)
-            {
-                validGroup = true;
-                break;
-            }
-        }
-
-        if(!validGroup)
-        {
-            std::cout
-                << "\nInvalid Group ID.\n";
-
-            return;
-        }
-
-    int choice;
-
-    while(true)
+    if(groups.empty())
     {
-        std::cout
-            << "\n=================================\n"
-            << "       GROUP WORKSPACE\n"
-            << "=================================\n"
-            << "1. Add Member\n"
-            << "2. View Members\n"
-            << "3. Remove Member\n"
-            << "\n"
-            << "4. Add Expense\n"
-            << "5. View Expenses\n"
-            << "6. View Expense Details\n\n"
-            //<< "7. View Balances\n"
-            << "7. View Settlements\n"
-            << "\n"
-            << "8. View Dashboard\n\n"
-            << "9. Delete Expense\n\n"
-            << "10. Exit Group Workspace\n\n"
-            << "=================================\n"
-            << "Choice: ";
+        Colors::warning("No Groups Exist. Create a Group First.");
+        return;
+    }
 
-        std::cin >> choice;
+    Colors::header("\n📋 AVAILABLE GROUPS");
+    groupService.listGroups();
+
+    int groupId = InputValidator::getPositiveInt("Enter Group ID: ");
+
+    if(!isValidGroup(groupId, groups))
+    {
+        Colors::error("Invalid Group ID.");
+        return;
+    }
+
+   while(true)
+    {
+        int choice = getGroupMenuChoice();
 
         switch(choice)
         {
@@ -190,472 +193,251 @@ void Menu::manageGroup()
             case 5:
                 viewExpenses(groupId);
                 break;
+
             case 6:
                 viewExpenseDetails(groupId);
                 break;
 
-            /*case 7:
-                viewBalances(groupId);
-                break;*/
-
             case 7:
                 viewSettlements(groupId);
                 break;
+
             case 8:
                 viewDashboard(groupId);
                 break;
+
             case 9:
                 deleteExpense(groupId);
                 break;
 
             case 10:
                 return;
-
-            default:
-                std::cout
-                    << "\nInvalid Choice\n";
         }
     }
-}
-void Menu::viewExpenses(
-    int groupId
-)
-{
-    std::cout
-        << "\n===== EXPENSES =====\n";
-
-    expenseService.viewExpenses(
-        groupId
-    );
-}
-void Menu::viewBalances(
-    int groupId
-)
-{
-    expenseService.viewBalances(
-        groupId,
-        memberService.getAllMembers()
-    );
-}
-void Menu::viewSettlements(
-    int groupId
-)
-{
-    expenseService.viewSettlements(
-        groupId,
-        memberService.getAllMembers()
-    );
-}
-void Menu::viewDashboard(
-    int groupId
-)
-{
-    auto members =
-        memberService.getAllMembers();
-
-    expenseService.viewDashboard(
-        groupId,
-        members
-    );
-}
-void Menu::addExpense(
-    int groupId
-)
-{
-            auto allMembers =
-            memberService.getAllMembers();
-
-        int memberCount = 0;
-
-        for(const auto& member : allMembers)
-        {
-            if(member.getGroupId() == groupId)
-            {
-                memberCount++;
-            }
-        }
-
-        if(memberCount == 0)
-        {
-            std::cout
-                << "\nNo Members Found In This Group.\n"
-                << "Add Members First.\n";
-
-            return;
-        }
-    std::string title;
-
-    double totalAmount;
-
-    int payerCount;
-
-    std::cin.ignore(
-        std::numeric_limits<std::streamsize>::max(),
-        '\n'
-    );
-
-    std::cout
-        << "\nExpense Title: ";
-
-    std::getline(
-        std::cin,
-        title
-    );
-
-    std::cout
-        << "Total Expense Amount: ";
-
-    std::cin >> totalAmount;
-    if(totalAmount <= 0)
-    {
-        std::cout
-            << "\nExpense Amount Must Be Positive.\n";
-
-        return;
-    }
-
-    std::cout
-        << "\n===== MEMBERS =====\n";
-
-    memberService.viewMembers(
-        groupId
-    );
-
-    std::cout
-        << "\nNumber Of Payers: ";
-
-    std::cin >> payerCount;
-
-            if(payerCount > memberCount)
-        {
-            std::cout
-                << "\nInvalid Payer Count.\n"
-                << "Only "
-                << memberCount
-                << " Member(s) Exist.\n";
-
-            return;
-        }
-
-        if(payerCount <= 0)
-        {
-            std::cout
-                << "\nPayer Count Must Be Positive.\n";
-
-            return;
-        }
-
-       double paidSum = 0;
-
-    std::set<int> usedPayers;
-
-    std::vector<std::pair<int,double>>
-    pendingPayments;
-
-    for(int i=0; i<payerCount; i++)
-    {
-        int memberId;
-
-        std::cout
-            << "\nMember ID: ";
-
-        std::cin >> memberId;
-
-        bool validMember = false;
-
-        for(const auto& member : allMembers)
-        {
-            if(member.getGroupId() == groupId &&
-            member.getId() == memberId)
-            {
-                validMember = true;
-                break;
-            }
-        }
-
-        if(!validMember)
-        {
-            std::cout
-                << "\nInvalid Member ID.\n";
-
-            i--;
-            continue;
-        }
-
-    if(usedPayers.count(memberId))
-    {
-        std::cout
-            << "\nMember Already Added As Payer.\n";
-
-        i--;
-        continue;
-    }
-
-    usedPayers.insert(memberId);
-
-    double paidAmount;
-
-    std::cout
-        << "Amount Paid: ";
-
-    std::cin >> paidAmount;
-
-    if(paidAmount <= 0)
-    {
-        std::cout
-            << "\nAmount Must Be Greater Than Zero.\n";
-
-        usedPayers.erase(memberId);
-
-        i--;
-        continue;
-    }
-
-    paidSum += paidAmount;
-
-    pendingPayments.push_back(
-    {
-        memberId,
-        paidAmount
-    });
-    }
-
-        if(paidSum != totalAmount)
-        {
-            std::cout
-                << "\nTransaction Cancelled.\n"
-                << "Total Paid Does Not Match Expense Amount.\n";
-
-            return;
-        }
-        int expenseId =
-    expenseService.createExpense(
-        groupId,
-        title,
-        totalAmount
-        );
-
-        for(const auto& payment :
-            pendingPayments)
-        {
-            expenseService.addPayment(
-                expenseId,
-                payment.first,
-                payment.second
-            );
-        }
-
-    std::cout
-        << "\nExpense Added Successfully\n";
-}
-
-void Menu::viewExpenseDetails(
-    int groupId
-)
-{
-    auto members =
-        memberService.getAllMembers();
-
-    expenseService.viewExpenseDetails(
-        groupId,
-        members
-    );
 }
 
 void Menu::addMember(int groupId)
 {
-    std::string name;
+    Colors::header("\n👤 ADD MEMBER");
 
-    std::cin.ignore();
-
-    std::cout
-        << "\nEnter Member Name: ";
-
-    std::getline(
-        std::cin,
-        name
-    );
-        bool blank = true;
-
-        for(char ch : name)
-        {
-            if(!std::isspace(ch))
-            {
-                blank = false;
-                break;
-            }
-        }
-
-        if(blank)
-        {
-            std::cout
-                << "\nMember Name Cannot Be Empty.\n";
-
-            return;
-        }
-        if(
-    memberService.memberExists(
-        groupId,
-        name
-         )
-        )
-        {
-            std::cout
-                << "\nMember Already Exists.\n";
-
-            return;
-        }
-
-    memberService.addMember(
-        groupId,
-        name
+    std::string name = InputValidator::getValidString(
+        "Enter Member Name: ",
+        "Member Name Cannot Be Empty."
     );
 
-    std::cout
-        << "\nMember Added Successfully\n";
+    if(memberService.memberExists(groupId, name))
+    {
+        Colors::warning("Member Already Exists.");
+        return;
+    }
+
+    memberService.addMember(groupId, name);
+    Colors::success("Member Added Successfully!");
 }
 
 void Menu::viewMembers(int groupId)
 {
-    std::cout
-        << "\n===== MEMBERS =====\n";
-
-    memberService.viewMembers(
-        groupId
-    );
+    Colors::header("\n👤 MEMBERS");
+    memberService.viewMembers(groupId);
 }
-void Menu::deleteExpense(
-    int groupId
-)
-{
-    auto expenses =
-        expenseService.getAllExpenses();
 
-    bool found = false;
-
-    std::cout
-        << "\n===== EXPENSES =====\n";
-
-    expenseService.viewExpenses(
-        groupId
-    );
-
-    int expenseId;
-
-    std::cout
-        << "\nEnter Expense ID: ";
-
-    std::cin
-        >> expenseId;
-
-    for(const auto& expense :
-        expenses)
-    {
-        if(expense.getGroupId()
-           == groupId
-           &&
-           expense.getId()
-           == expenseId)
-        {
-            found = true;
-            break;
-        }
-    }
-
-    if(!found)
-    {
-        std::cout
-            << "\nInvalid Expense ID\n";
-
-        return;
-    }
-
-    expenseService.deleteExpense(
-        expenseId
-    );
-
-    std::cout
-        << "\nExpense Deleted Successfully\n";
-}
 void Menu::removeMember(int groupId)
 {
-    auto allMembers =
-        memberService.getAllMembers();
+    auto allMembers = memberService.getAllMembers();
 
-    bool groupHasMembers = false;
+    std::vector<Member> groupMembers = getGroupMembers(groupId, allMembers);
 
-    for(const auto& member : allMembers)
+    if(groupMembers.empty())
     {
-        if(member.getGroupId() == groupId)
-        {
-            groupHasMembers = true;
-            break;
-        }
-    }
-
-    if(!groupHasMembers)
-    {
-        std::cout
-            << "\nNo Members Found In This Group.\n";
-
+        Colors::warning("No Members Found In This Group.");
         return;
     }
 
-    std::cout
-        << "\n===== MEMBERS =====\n";
+    Colors::header("\n👤 MEMBERS");
+    memberService.viewMembers(groupId);
 
-    memberService.viewMembers(
-        groupId
-    );
+    int memberId = InputValidator::getPositiveInt("Enter Member ID: ");
 
-    int memberId;
-
-    std::cout
-        << "\nEnter Member ID: ";
-
-    std::cin >> memberId;
-
-    bool validMember = false;
-
-    for(const auto& member : allMembers)
+    if(!isValidGroupMember(groupId, memberId, allMembers))
     {
-        if(member.getGroupId() == groupId &&
-           member.getId() == memberId)
-        {
-            validMember = true;
-            break;
-        }
-    }
-
-    if(!validMember)
-    {
-        std::cout
-            << "\nInvalid Member ID.\n";
-
+        Colors::error("Invalid Member ID.");
         return;
     }
-    double balance =
-    expenseService.getMemberBalance(
+
+    double balance = expenseService.getMemberBalance(
         groupId,
         memberId,
         allMembers
-            );
-
-        if(balance > 0.01
-        ||
-        balance < -0.01)
-        {
-            std::cout
-                << "\nCannot Remove Member.\n"
-                << "Member Has Pending Debt "
-                << "Settle Balances First.\n";
-
-            return;
-        }
-    memberService.removeMember(
-        memberId
     );
 
-    std::cout
-        << "\nMember Removed Successfully\n";
+    if(InputValidator::hasDebt(balance))
+    {
+        Colors::error(
+            "Cannot Remove Member. Member Has Pending Debt. "
+            "Settle Balances First."
+        );
+        return;
+    }
+
+    memberService.removeMember(memberId);
+    Colors::success("Member Removed Successfully!");
+}
+
+void Menu::viewExpenses(int groupId)
+{
+    Colors::header("\n💰 EXPENSES");
+    expenseService.viewExpenses(groupId);
+}
+
+void Menu::viewExpenseDetails(int groupId)
+{
+    auto members = memberService.getAllMembers();
+    Colors::header("\n💰 EXPENSE DETAILS");
+    expenseService.viewExpenseDetails(groupId, members);
+}
+
+void Menu::viewSettlements(int groupId)
+{
+    auto members = memberService.getAllMembers();
+    Colors::header("\n🔄 SETTLEMENTS");
+    expenseService.viewSettlements(groupId, members);
+}
+
+void Menu::viewDashboard(int groupId)
+{
+    auto members = memberService.getAllMembers();
+    Colors::header("\n📊 DASHBOARD");
+    expenseService.viewDashboard(groupId, members);
+}
+
+void Menu::addExpense(int groupId)
+{
+    Colors::header("\n💰 ADD EXPENSE");
+
+    auto allMembers = memberService.getAllMembers();
+    std::vector<Member> groupMembers = getGroupMembers(groupId, allMembers);
+
+    if(groupMembers.empty())
+    {
+        Colors::warning("No Members Found In This Group. Add Members First.");
+        return;
+    }
+
+    // Get expense details
+    std::string title = InputValidator::getValidString(
+        "Expense Title: ",
+        "Expense Title Cannot Be Empty."
+    );
+
+    double totalAmount = InputValidator::getPositiveDouble(
+        "Total Expense Amount: ",
+        0.0
+    );
+
+    Colors::header("\n👤 MEMBERS");
+    memberService.viewMembers(groupId);
+
+    int payerCount = InputValidator::getIntInRange(
+        "Number Of Payers: ",
+        1,
+        groupMembers.size()
+    );
+
+    double paidSum = 0;
+    std::set<int> usedPayers;
+    std::vector<std::pair<int, double>> pendingPayments;
+
+    for(int i = 0; i < payerCount; i++)
+    {
+        int memberId = InputValidator::getPositiveInt("Member ID: ");
+
+        if(!isValidGroupMember(groupId, memberId, allMembers))
+        {
+            Colors::warning("Invalid Member ID. Try again.");
+            i--;
+            continue;
+        }
+        if(usedPayers.count(memberId))
+        {
+            Colors::warning("Member Already Added As Payer. Try again.");
+            i--;
+            continue;
+        }
+
+        usedPayers.insert(memberId);
+
+        // Get amount
+        double paidAmount = InputValidator::getPositiveDouble(
+            "Amount Paid: ",
+            0.0
+        );
+
+        paidSum += paidAmount;
+        pendingPayments.push_back({memberId, paidAmount});
+
+        Colors::info(
+            "Running Total: " + std::to_string(paidSum) + " / " + 
+            std::to_string(totalAmount)
+        );
+    }
+
+    if(!InputValidator::isApproximatelyEqual(paidSum, totalAmount))
+    {
+        Colors::error(
+            "Transaction Cancelled. Total Paid (" + std::to_string(paidSum) +
+            ") Does Not Match Expense Amount (" + std::to_string(totalAmount) + ")."
+        );
+        return;
+    }
+
+    int expenseId = expenseService.createExpense(
+        groupId,
+        title,
+        totalAmount
+    );
+    for(const auto& payment : pendingPayments)
+    {
+        expenseService.addPayment(
+            expenseId,
+            payment.first,
+            payment.second
+        );
+    }
+
+    Colors::success("Expense Added Successfully!");
+}
+
+void Menu::deleteExpense(int groupId)
+{
+    Colors::header("\n🗑️  DELETE EXPENSE");
+
+    auto expenses = expenseService.getAllExpenses();
+    std::vector<Expense> groupExpenses;
+    for(const auto& expense : expenses)
+    {
+        if(expense.getGroupId() == groupId)
+        {
+            groupExpenses.push_back(expense);
+        }
+    }
+
+    if(groupExpenses.empty())
+    {
+        Colors::warning("No Expenses Found In This Group.");
+        return;
+    }
+
+    Colors::header("\n💰 EXPENSES");
+    expenseService.viewExpenses(groupId);
+
+    int expenseId = InputValidator::getPositiveInt("Enter Expense ID: ");
+
+    if(!isValidExpense(groupId, expenseId, expenses))
+    {
+        Colors::error("Invalid Expense ID.");
+        return;
+    }
+
+    expenseService.deleteExpense(expenseId);
+    Colors::success("Expense Deleted Successfully!");
 }

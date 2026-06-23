@@ -1,4 +1,4 @@
-#include "cli/Menu.h"
+#include "../include/cli/Menu.h"
 
 int main()
 {

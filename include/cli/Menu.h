@@ -3,16 +3,40 @@
 #include "../services/GroupService.h"
 #include "../services/MemberService.h"
 #include "../services/ExpenseService.h"
+#include "../models/Group.h"
+#include "../models/Member.h"
+#include <vector>
 
 class Menu
 {
 private:
 
     GroupService groupService;
-
     MemberService memberService;
-
     ExpenseService expenseService;
+
+    int getMainMenuChoice();
+
+    int getGroupMenuChoice();
+
+    bool isValidGroup(int groupId, const std::vector<Group>& groups);
+
+    bool isValidGroupMember(
+        int groupId,
+        int memberId,
+        const std::vector<Member>& allMembers
+    );
+
+    std::vector<Member> getGroupMembers(
+        int groupId,
+        const std::vector<Member>& allMembers
+    );
+
+    bool isValidExpense(
+        int groupId,
+        int expenseId,
+        const std::vector<Expense>& allExpenses
+    );
 
 public:
 
@@ -36,11 +60,9 @@ public:
 
     void viewExpenseDetails(int groupId);
 
-    void viewBalances(int groupId);
-
     void viewSettlements(int groupId);
 
     void viewDashboard(int groupId);
-
+    
     void deleteExpense(int groupId);
 };
