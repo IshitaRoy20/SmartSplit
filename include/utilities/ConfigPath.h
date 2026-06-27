@@ -76,5 +76,5 @@ namespace Config
         }
     };
 
-    std::string Path::dataDirectory = "../data";
+   // std::string Path::dataDirectory = "../data";
 }

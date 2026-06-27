@@ -1,37 +1,39 @@
 #include "../include/repository/FileExpenseRepository.h"
-
+#include "../include/utilities/ConfigPath.h"
 #include <fstream>
 #include <sstream>
 #include <iostream>
 
 void FileExpenseRepository::saveExpense(const Expense& expense)
 {
-    std::ofstream file("../data/expenses.txt", std::ios::app);
+    std::ofstream file(Config::Path::getExpensesFile(), std::ios::app);
 
-    file << expense.getId()
-         << ","
-         << expense.getGroupId()
-         << ","
-         << expense.getTitle()
-         << ","
-         << expense.getAmount()
-         << "\n";
+    if(!file.is_open())
+    {
+        std::cerr << "Error: Could not open expenses file for writing.\n";
+        return;
+    }
+
+    file << expense.getId() << "," << expense.getGroupId() << "," 
+         << expense.getTitle() << "," << expense.getAmount() << "\n";
+    file.close();
 }
 
 std::vector<Expense> FileExpenseRepository::getAllExpenses()
 {
     std::vector<Expense> expenses;
+    std::ifstream file(Config::Path::getExpensesFile());
 
-    std::ifstream file("../data/expenses.txt");
+    if(!file.is_open())
+        return expenses;
 
     std::string line;
-
     while(std::getline(file, line))
     {
-        if(line.empty()) continue;
+        if(line.empty()) 
+            continue;
 
         std::stringstream ss(line);
-
         std::string id, groupId, title, amount;
 
         std::getline(ss, id, ',');
@@ -39,44 +41,40 @@ std::vector<Expense> FileExpenseRepository::getAllExpenses()
         std::getline(ss, title, ',');
         std::getline(ss, amount);
 
-        expenses.emplace_back(
-            std::stoi(id),
-            std::stoi(groupId),
-            title,
-            std::stod(amount)
-        );
-    }
-
-    return expenses;
-}
-void FileExpenseRepository::deleteExpense(
-    int expenseId
-)
-{
-    auto expenses =
-        getAllExpenses();
-
-    std::ofstream file(
-        "../data/expenses.txt"
-    );
-
-    for(const auto& expense :
-        expenses)
-    {
-        if(expense.getId()
-           == expenseId)
+        try
         {
+            expenses.emplace_back(std::stoi(id), std::stoi(groupId), title, std::stod(amount));
+        }
+        catch(const std::exception& e)
+        {
+            std::cerr << "Error parsing expense: " << e.what() << "\n";
             continue;
         }
-
-        file
-            << expense.getId()
-            << ","
-            << expense.getGroupId()
-            << ","
-            << expense.getTitle()
-            << ","
-            << expense.getAmount()
-            << "\n";
     }
+
+    file.close();
+    return expenses;
+}
+
+void FileExpenseRepository::deleteExpense(int expenseId)
+{
+    auto expenses = getAllExpenses();
+    std::ofstream file(Config::Path::getExpensesFile());
+
+    if(!file.is_open())
+    {
+        std::cerr << "Error: Could not open expenses file for writing.\n";
+        return;
+    }
+
+    for(const auto& expense : expenses)
+    {
+        if(expense.getId() != expenseId)
+        {
+            file << expense.getId() << "," << expense.getGroupId() << "," 
+                 << expense.getTitle() << "," << expense.getAmount() << "\n";
+        }
+    }
+
+    file.close();
 }

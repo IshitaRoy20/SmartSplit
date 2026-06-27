@@ -1,54 +1,54 @@
 #include "../include/repository/FileGroupRepository.h"
-#include <iostream>
+#include "../include/utilities/ConfigPath.h"
 #include <fstream>
 #include <sstream>
+#include <iostream>
 
-void FileGroupRepository::saveGroup(
-    const Group& group
-)
+void FileGroupRepository::saveGroup(const Group& group)
 {
-    std::ofstream file("../data/groups.txt", std::ios::app );
+    std::ofstream file(Config::Path::getGroupsFile(), std::ios::app);
 
+    if(!file.is_open())
+    {
+        std::cerr << "Error: Could not open groups file for writing.\n";
+        return;
+    }
 
-
-    file<< group.getId()
-        << ","
-        << group.getName()
-        << "\n";
+    file << group.getId() << "," << group.getName() << "\n";
+    file.close();
 }
-std::vector<Group>
-FileGroupRepository::getAllGroups()
+
+std::vector<Group> FileGroupRepository::getAllGroups()
 {
     std::vector<Group> groups;
+    std::ifstream file(Config::Path::getGroupsFile());
 
-    std::ifstream file(
-        "../data/groups.txt"
-    );
+    if(!file.is_open())
+        return groups;
 
     std::string line;
-
-    while(std::getline(file,line))
+    while(std::getline(file, line))
     {
+        if(line.empty()) 
+            continue;
+
         std::stringstream ss(line);
+        std::string idStr, name;
 
-        std::string idStr;
-        std::string name;
+        std::getline(ss, idStr, ',');
+        std::getline(ss, name);
 
-        std::getline(
-            ss,
-            idStr,
-            ','
-        );
-
-        std::getline(
-            ss,
-            name
-        );
-
-        groups.emplace_back(
-            std::stoi(idStr),
-            name
-        );
+        try
+        {
+            groups.emplace_back(std::stoi(idStr), name);
+        }
+        catch(const std::exception& e)
+        {
+            std::cerr << "Error parsing group: " << e.what() << "\n";
+            continue;
+        }
     }
+
+    file.close();
     return groups;
 }

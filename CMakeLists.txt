@@ -5,7 +5,7 @@ project(SmartSplit)
 set(CMAKE_CXX_STANDARD 17)
 
 include_directories(src)
-
+include_directories(include)
 add_executable(
     SmartSplit
     src/main.cpp
@@ -14,4 +14,5 @@ add_executable(
     src/repository/FileMemberRepository.cpp
     src/repository/FileExpenseRepository.cpp
 src/repository/FileExpensePaymentRepository.cpp
+src/utilities/ConfigPath.cpp
 )
