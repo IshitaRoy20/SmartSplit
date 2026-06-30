@@ -1,0 +1,3 @@
+/workspaces/SmartSplit/build/CMakeFiles/SmartSplit.dir
+/workspaces/SmartSplit/build/CMakeFiles/edit_cache.dir
+/workspaces/SmartSplit/build/CMakeFiles/rebuild_cache.dir
