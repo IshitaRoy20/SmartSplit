@@ -22,20 +22,13 @@ private:
     bool isValidGroup(int groupId, const std::vector<Group>& groups);
 
     bool isValidGroupMember(
-        int groupId,
         int memberId,
-        const std::vector<Member>& allMembers
-    );
-
-    std::vector<Member> getGroupMembers(
-        int groupId,
-        const std::vector<Member>& allMembers
+        const std::vector<Member>& groupMembers
     );
 
     bool isValidExpense(
-        int groupId,
         int expenseId,
-        const std::vector<Expense>& allExpenses
+        const std::vector<Expense>& groupExpenses
     );
 
 public:

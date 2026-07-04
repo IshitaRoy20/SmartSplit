@@ -4,8 +4,8 @@
 int main()
 {
     Config::Path::initialize("../data");
-    
-   Database database;
+
+    Database& database = Database::getInstance();
 
     if(!database.open())
     {
@@ -16,6 +16,6 @@ int main()
 
     Menu menu;
     menu.run();
-    
+
     return 0;
 }

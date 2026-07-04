@@ -2,42 +2,21 @@
 
 #include <iostream>
 
-#include "../repository/FileGroupRepository.h"
+#include "../repository/SQLiteGroupRepository.h"
 
 class GroupService
 {
 private:
 
-    FileGroupRepository repository;
-
-    int nextId = 1;
+    SQLiteGroupRepository repository;
 
 public:
 
-    GroupService()
-    {
-        auto groups =
-            repository.getAllGroups();
-
-        if(!groups.empty())
-        {
-            nextId =
-                groups.back().getId()
-                + 1;
-        }
-    }
     void createGroup(
         const std::string& name
     )
     {
-        Group group(
-            nextId++,
-            name
-        );
-
-        repository.saveGroup(
-            group
-        );
+        repository.addGroup(name);
     }
 
     void listGroups()
@@ -65,8 +44,9 @@ public:
             << "\n";
         }
     }
+
     std::vector<Group> getAllGroups()
-{
-    return repository.getAllGroups();
-}
+    {
+        return repository.getAllGroups();
+    }
 };

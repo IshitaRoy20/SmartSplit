@@ -54,32 +54,21 @@ bool Menu::isValidGroup(int groupId, const std::vector<Group>& groups)
     return false;
 }
 
-bool Menu::isValidGroupMember(int groupId, int memberId, const std::vector<Member>& allMembers)
+bool Menu::isValidGroupMember(int memberId, const std::vector<Member>& groupMembers)
 {
-    for(const auto& member : allMembers)
+    for(const auto& member : groupMembers)
     {
-        if(member.getGroupId() == groupId && member.getId() == memberId)
+        if(member.getId() == memberId)
             return true;
     }
     return false;
 }
 
-std::vector<Member> Menu::getGroupMembers(int groupId, const std::vector<Member>& allMembers)
+bool Menu::isValidExpense(int expenseId, const std::vector<Expense>& groupExpenses)
 {
-    std::vector<Member> groupMembers;
-    for(const auto& member : allMembers)
+    for(const auto& expense : groupExpenses)
     {
-        if(member.getGroupId() == groupId)
-            groupMembers.push_back(member);
-    }
-    return groupMembers;
-}
-
-bool Menu::isValidExpense(int groupId, int expenseId, const std::vector<Expense>& allExpenses)
-{
-    for(const auto& expense : allExpenses)
-    {
-        if(expense.getGroupId() == groupId && expense.getId() == expenseId)
+        if(expense.getId() == expenseId)
             return true;
     }
     return false;
@@ -203,8 +192,7 @@ void Menu::viewMembers(int groupId)
 
 void Menu::removeMember(int groupId)
 {
-    auto allMembers = memberService.getAllMembers();
-    std::vector<Member> groupMembers = getGroupMembers(groupId, allMembers);
+    auto groupMembers = memberService.getMembersByGroup(groupId);
 
     if(groupMembers.empty())
     {
@@ -218,14 +206,14 @@ void Menu::removeMember(int groupId)
 
     int memberId = InputValidator::getPositiveInt("Member ID: ");
 
-    if(!isValidGroupMember(groupId, memberId, allMembers))
+    if(!isValidGroupMember(memberId, groupMembers))
     {
         Colors::error("Invalid member ID.");
         std::cout << "\n";
         return;
     }
 
-    double balance = expenseService.getMemberBalance(groupId, memberId, allMembers);
+    double balance = expenseService.getMemberBalance(groupId, memberId, groupMembers);
 
     if(InputValidator::hasDebt(balance))
     {
@@ -235,7 +223,7 @@ void Menu::removeMember(int groupId)
         return;
     }
 
-    memberService.removeMember(memberId);
+    memberService.removeMember(groupId, memberId);
     Colors::success("Member removed!");
     std::cout << "\n";
 }
@@ -249,7 +237,7 @@ void Menu::viewExpenses(int groupId)
 
 void Menu::viewExpenseDetails(int groupId)
 {
-    auto members = memberService.getAllMembers();
+    auto members = memberService.getMembersByGroup(groupId);
     Colors::header("\nExpense Details");
     expenseService.viewExpenseDetails(groupId, members);
     std::cout << "\n";
@@ -257,7 +245,7 @@ void Menu::viewExpenseDetails(int groupId)
 
 void Menu::viewSettlements(int groupId)
 {
-    auto members = memberService.getAllMembers();
+    auto members = memberService.getMembersByGroup(groupId);
     Colors::header("\nSettlements");
     expenseService.viewSettlements(groupId, members);
     std::cout << "\n";
@@ -265,7 +253,7 @@ void Menu::viewSettlements(int groupId)
 
 void Menu::viewDashboard(int groupId)
 {
-    auto members = memberService.getAllMembers();
+    auto members = memberService.getMembersByGroup(groupId);
     Colors::header("\nDashboard");
     expenseService.viewDashboard(groupId, members);
     std::cout << "\n";
@@ -275,8 +263,7 @@ void Menu::addExpense(int groupId)
 {
     Colors::header("\nAdd Expense");
 
-    auto allMembers = memberService.getAllMembers();
-    std::vector<Member> groupMembers = getGroupMembers(groupId, allMembers);
+    auto groupMembers = memberService.getMembersByGroup(groupId);
 
     if(groupMembers.empty())
     {
@@ -316,7 +303,7 @@ void Menu::addExpense(int groupId)
         
         int memberId = InputValidator::getPositiveInt("Member ID: ");
 
-        if(!isValidGroupMember(groupId, memberId, allMembers))
+        if(!isValidGroupMember(memberId, groupMembers))
         {
             Colors::warning("Invalid ID.");
             i--;
@@ -355,7 +342,7 @@ void Menu::addExpense(int groupId)
     
     for(const auto& payment : pendingPayments)
     {
-        expenseService.addPayment(expenseId, payment.first, payment.second);
+        expenseService.addPayment(expenseId, groupId, payment.first, payment.second);
     }
 
     Colors::success("Expense added: ₹" + std::to_string(totalAmount) + " (" + title + ")");
@@ -366,14 +353,7 @@ void Menu::deleteExpense(int groupId)
 {
     Colors::header("\nDelete Expense");
 
-    auto expenses = expenseService.getAllExpenses();
-    std::vector<Expense> groupExpenses;
-    
-    for(const auto& expense : expenses)
-    {
-        if(expense.getGroupId() == groupId)
-            groupExpenses.push_back(expense);
-    }
+    auto groupExpenses = expenseService.getExpensesByGroup(groupId);
 
     if(groupExpenses.empty())
     {
@@ -388,14 +368,14 @@ void Menu::deleteExpense(int groupId)
 
     int expenseId = InputValidator::getPositiveInt("Expense ID: ");
 
-    if(!isValidExpense(groupId, expenseId, expenses))
+    if(!isValidExpense(expenseId, groupExpenses))
     {
         Colors::error("Invalid expense ID.");
         std::cout << "\n";
         return;
     }
 
-    expenseService.deleteExpense(expenseId);
+    expenseService.deleteExpense(groupId, expenseId);
     Colors::success("Expense deleted!");
     std::cout << "\n";
 }

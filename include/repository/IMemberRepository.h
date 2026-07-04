@@ -8,14 +8,18 @@ class IMemberRepository
 {
 public:
 
-    virtual void saveMember(
-        const Member& member
+    virtual Member addMember(
+        int groupId,
+        const std::string& name
     ) = 0;
 
     virtual std::vector<Member>
-    getAllMembers() = 0;
+    getMembersByGroup(
+        int groupId
+    ) = 0;
 
     virtual void deleteMember(
+        int groupId,
         int memberId
     ) = 0;
 

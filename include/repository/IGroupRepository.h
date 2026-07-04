@@ -7,8 +7,8 @@ class IGroupRepository
 {
 public:
 
-    virtual void saveGroup(
-        const Group& group
+    virtual Group addGroup(
+        const std::string& name
     ) = 0;
 
     virtual std::vector<Group>

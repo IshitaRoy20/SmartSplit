@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../repository/FileExpenseRepository.h"
-#include "../repository/FileExpensePaymentRepository.h"
+#include "../repository/SQLiteExpenseRepository.h"
+#include "../repository/SQLiteExpensePaymentRepository.h"
 
 #include <iostream>
 #include <unordered_map>
@@ -12,26 +12,11 @@ class ExpenseService
 {
 private:
 
-    FileExpenseRepository expenseRepo;
+    SQLiteExpenseRepository expenseRepo;
 
-    FileExpensePaymentRepository paymentRepo;
-
-    int nextExpenseId = 1;
+    SQLiteExpensePaymentRepository paymentRepo;
 
 public:
-
-    ExpenseService()
-    {
-        auto expenses =
-            expenseRepo.getAllExpenses();
-
-        if(!expenses.empty())
-        {
-            nextExpenseId =
-                expenses.back().getId()
-                + 1;
-        }
-    }
 
     int createExpense(
         int groupId,
@@ -39,22 +24,14 @@ public:
         double amount
     )
     {
-        Expense expense(
-            nextExpenseId,
-            groupId,
-            title,
-            amount
-        );
+        Expense expense = expenseRepo.addExpense(groupId, title, amount);
 
-        expenseRepo.saveExpense(
-            expense
-        );
-
-        return nextExpenseId++;
+        return expense.getId();
     }
 
     void addPayment(
         int expenseId,
+        int groupId,
         int memberId,
         double amount
     )
@@ -62,28 +39,30 @@ public:
         paymentRepo.savePayment(
             ExpensePayment(
                 expenseId,
+                groupId,
                 memberId,
                 amount
             )
         );
     }
 
-void viewExpenses(
-    int groupId
-)
-{
-    auto expenses =
-        expenseRepo.getAllExpenses();
-
-    bool found = false;
-
-    for(auto& expense : expenses)
+    void viewExpenses(
+        int groupId
+    )
     {
-        if(expense.getGroupId()
-           == groupId)
-        {
-            found = true;
+        auto expenses =
+            expenseRepo.getExpensesByGroup(groupId);
 
+        if(expenses.empty())
+        {
+            std::cout
+                << "\nNo Expenses Found\n";
+
+            return;
+        }
+
+        for(auto& expense : expenses)
+        {
             std::cout
                 << expense.getId()
                 << ". "
@@ -94,180 +73,81 @@ void viewExpenses(
         }
     }
 
-    if(!found)
-    {
-        std::cout
-            << "\nNo Expenses Found\n";
-    }
-}
-
-    void viewBalances(
-    int groupId,
-    const std::vector<Member>& members
+    std::unordered_map<int, double> computeBalances(
+        int groupId,
+        const std::vector<Member>& members
     )
     {
         auto expenses =
-            expenseRepo.getAllExpenses();
+            expenseRepo.getExpensesByGroup(groupId);
 
         auto payments =
-            paymentRepo.getAllPayments();
+            paymentRepo.getPaymentsByGroup(groupId);
 
-        std::unordered_map<int,double>
-            balances;
+        std::unordered_map<int, double> balances;
 
         for(const auto& member : members)
         {
-            if(member.getGroupId() == groupId)
-            {
-                balances[
-                    member.getId()
-                ] = 0;
-            }
+            balances[member.getId()] = 0;
         }
 
         for(const auto& payment : payments)
         {
-            balances[
-                payment.getMemberId()
-            ] += payment.getAmountPaid();
+            balances[payment.getMemberId()] += payment.getAmountPaid();
         }
+
+        int memberCount = static_cast<int>(members.size());
 
         for(const auto& expense : expenses)
         {
-            if(expense.getGroupId()
-            != groupId)
-            {
-                continue;
-            }
-
-            int memberCount = 0;
+            double share = expense.getAmount() / memberCount;
 
             for(const auto& member : members)
             {
-                if(member.getGroupId()
-                == groupId)
-                {
-                    memberCount++;
-                }
-            }
-
-            double share =
-                expense.getAmount()
-                / memberCount;
-
-            for(const auto& member : members)
-            {
-                if(member.getGroupId()
-                == groupId)
-                {
-                    balances[
-                        member.getId()
-                    ] -= share;
-                }
+                balances[member.getId()] -= share;
             }
         }
+
+        return balances;
+    }
+
+    void viewBalances(
+        int groupId,
+        const std::vector<Member>& members
+    )
+    {
+        auto balances = computeBalances(groupId, members);
 
         std::cout
             << "\n===== BALANCES =====\n";
 
         for(const auto& member : members)
         {
-            if(member.getGroupId()
-            != groupId)
-            {
-                continue;
-            }
-
             std::cout
                 << member.getName()
                 << " : "
-                << balances[
-                    member.getId()
-                ]
+                << balances[member.getId()]
                 << "\n";
         }
     }
-void viewSettlements(
-    int groupId,
-    const std::vector<Member>& members
-)
+
+    void viewSettlements(
+        int groupId,
+        const std::vector<Member>& members
+    )
     {
-        auto expenses =
-            expenseRepo.getAllExpenses();
-
-        auto payments =
-            paymentRepo.getAllPayments();
-
-        std::unordered_map<int,double>
-            balances;
-
-        for(const auto& member : members)
-        {
-            if(member.getGroupId() == groupId)
-            {
-                balances[
-                    member.getId()
-                ] = 0;
-            }
-        }
-
-        for(const auto& payment : payments)
-        {
-            balances[
-                payment.getMemberId()
-            ] += payment.getAmountPaid();
-        }
-
-        for(const auto& expense : expenses)
-        {
-            if(expense.getGroupId()
-            != groupId)
-            {
-                continue;
-            }
-
-            int memberCount = 0;
-
-            for(const auto& member : members)
-            {
-                if(member.getGroupId()
-                == groupId)
-                {
-                    memberCount++;
-                }
-            }
-
-            double share =
-                expense.getAmount()
-                / memberCount;
-
-            for(const auto& member : members)
-            {
-                if(member.getGroupId()
-                == groupId)
-                {
-                    balances[
-                        member.getId()
-                    ] -= share;
-                }
-            }
-        }
+        auto balances = computeBalances(groupId, members);
 
         std::cout
             << "\n===== BALANCES =====\n";
 
         for(const auto& member : members)
         {
-            if(member.getGroupId() == groupId)
-            {
-                std::cout
-                    << member.getName()
-                    << " : "
-                    << balances[
-                        member.getId()
-                    ]
-                    << "\n";
-            }
+            std::cout
+                << member.getName()
+                << " : "
+                << balances[member.getId()]
+                << "\n";
         }
 
         struct Person
@@ -276,97 +156,56 @@ void viewSettlements(
             double amount;
         };
 
-        std::vector<Person>
-            creditors;
-
-        std::vector<Person>
-            debtors;
-
-        int optimizedTransactions =
-            0;
+        std::vector<Person> creditors;
+        std::vector<Person> debtors;
 
         for(const auto& member : members)
         {
-            if(member.getGroupId()
-            != groupId)
-            {
-                continue;
-            }
-
-            double balance =
-                balances[
-                    member.getId()
-                ];
+            double balance = balances[member.getId()];
 
             if(balance > 0.01)
             {
-                creditors.push_back(
-                {
-                    member.getId(),
-                    balance
-                });
+                creditors.push_back({member.getId(), balance});
             }
             else if(balance < -0.01)
             {
-                debtors.push_back(
-                {
-                    member.getId(),
-                    -balance
-                });
+                debtors.push_back({member.getId(), -balance});
             }
         }
-                int rawTransactions =
-            debtors.size()
-            *
-            creditors.size();
+
+        int rawTransactions = static_cast<int>(debtors.size() * creditors.size());
+        int optimizedTransactions = 0;
 
         std::cout
-    << "\n===== SETTLEMENT ANALYSIS =====\n";
+            << "\n===== SETTLEMENT ANALYSIS =====\n";
 
-std::cout
-    << "\nDebtors : "
-    << debtors.size();
+        std::cout << "\nDebtors : " << debtors.size();
+        std::cout << "\nCreditors : " << creditors.size();
+        std::cout << "\nPotential Transactions : " << rawTransactions;
+        std::cout << "\n---------------------\n";
 
-std::cout
-    << "\nCreditors : "
-    << creditors.size();
-
-std::cout
-    << "\nPotential Transactions : "
-    << rawTransactions;
-std::cout<<"\n---------------------\n";
-
-        int i = 0;
-        int j = 0;
+        size_t i = 0;
+        size_t j = 0;
 
         bool found = false;
 
-        while(i < debtors.size() &&
-            j < creditors.size())
+        while(i < debtors.size() && j < creditors.size())
         {
-            double amount =
-                std::min(
-                    debtors[i].amount,
-                    creditors[j].amount
-                );
+            double amount = std::min(debtors[i].amount, creditors[j].amount);
 
             std::string debtorName;
             std::string creditorName;
 
             for(const auto& member : members)
             {
-                if(member.getId()
-                == debtors[i].memberId)
+                if(member.getId() == debtors[i].memberId)
                 {
-                    debtorName =
-                        member.getName();
+                    debtorName = member.getName();
                 }
 
-                if(member.getId()
-                == creditors[j].memberId)
+                if(member.getId() == creditors[j].memberId)
                 {
-                    creditorName =
-                        member.getName();
+                    creditorName = member.getName();
                 }
             }
 
@@ -397,368 +236,180 @@ std::cout<<"\n---------------------\n";
 
         if(!found)
         {
-            std::cout
-                << "No Settlements Required.\n";
+            std::cout << "No Settlements Required.\n";
         }
-            else
+        else
+        {
+            double reduction = 0;
+
+            if(rawTransactions > 0)
             {
-                double reduction = 0;
-
-                if(rawTransactions > 0)
-                {
-                    reduction =
-                        (
-                            rawTransactions
-                            -
-                            optimizedTransactions
-                        )
-                        *
-                        100.0
-                        /
-                        rawTransactions;
-                }
-
-                std::cout
-                    << "\n\nOptimized Transactions : "
-                    << optimizedTransactions;
-
-                std::cout
-                    << "\nTransaction Reduction : "
-                    << reduction
-                    << "%\n";
+                reduction =
+                    (rawTransactions - optimizedTransactions)
+                    * 100.0
+                    / rawTransactions;
             }
+
+            std::cout << "\n\nOptimized Transactions : " << optimizedTransactions;
+            std::cout << "\nTransaction Reduction : " << reduction << "%\n";
+        }
     }
-     void viewExpenseDetails(
-      int groupId,
+
+    void viewExpenseDetails(
+        int groupId,
         const std::vector<Member>& members
-        )
+    )
+    {
+        auto expenses =
+            expenseRepo.getExpensesByGroup(groupId);
+
+        auto payments =
+            paymentRepo.getPaymentsByGroup(groupId);
+
+        if(expenses.empty())
         {
-            auto expenses =
-                expenseRepo.getAllExpenses();
-
-            auto payments =
-                paymentRepo.getAllPayments();
-
-            bool found = false;
-
-            for(const auto& expense : expenses)
-            {
-                if(expense.getGroupId() != groupId)
-                {
-                    continue;
-                }
-
-                found = true;
-
-                std::cout
-                    << "\n---------------------\n";
-
-                std::cout
-                    << "Expense ID: "
-                    << expense.getId()
-                    << "\n";
-
-                std::cout
-                    << "Title: "
-                    << expense.getTitle()
-                    << "\n";
-
-                std::cout
-                    << "Amount: ₹"
-                    << expense.getAmount()
-                    << "\n";
-
-                std::cout
-                    << "\nPayments:\n";
-
-                for(const auto& payment : payments)
-                {
-                    if(payment.getExpenseId()
-                    != expense.getId())
-                    {
-                        continue;
-                    }
-
-                    std::string memberName =
-                        "Unknown";
-
-                    for(const auto& member :
-                        members)
-                    {
-                        if(member.getId()
-                        ==
-                        payment.getMemberId())
-                        {
-                            memberName =
-                                member.getName();
-
-                            break;
-                        }
-                    }
-
-                    std::cout
-                        << memberName
-                        << " ₹"
-                        << payment.getAmountPaid()
-                        << "\n";
-                }
-            }
-
-            if(!found)
-            {
-                std::cout
-                    << "\nNo Expenses Found\n";
-            }
+            std::cout << "\nNo Expenses Found\n";
+            return;
         }
-    void viewDashboard(
-    int groupId,
-    const std::vector<Member>& members
-        )
+
+        for(const auto& expense : expenses)
         {
-            auto expenses =
-                expenseRepo.getAllExpenses();
-            auto payments =
-                paymentRepo.getAllPayments();
+            std::cout << "\n---------------------\n";
+            std::cout << "Expense ID: " << expense.getId() << "\n";
+            std::cout << "Title: " << expense.getTitle() << "\n";
+            std::cout << "Amount: ₹" << expense.getAmount() << "\n";
+            std::cout << "\nPayments:\n";
 
-            int memberCount = 0;
-
-            for(const auto& member : members)
-            {
-                if(member.getGroupId()
-                == groupId)
-                {
-                    memberCount++;
-                }
-            }
-
-            int expenseCount = 0;
-
-            double totalSpending = 0;
-
-            double largestAmount = 0;
-
-            std::string largestExpense =
-                "None";
-                std::unordered_map<int,double>
-                contributionMap;
-
-            std::unordered_map<int,int>
-                paymentFrequency;
-
-            for(const auto& expense : expenses)
-            {
-                if(expense.getGroupId()
-                != groupId)
-                {
-                    continue;
-                }
-
-                expenseCount++;
-
-                totalSpending +=
-                    expense.getAmount();
-
-                if(expense.getAmount()
-                > largestAmount)
-                {
-                    largestAmount =
-                        expense.getAmount();
-
-                    largestExpense =
-                        expense.getTitle();
-                }
-            }
             for(const auto& payment : payments)
             {
-                contributionMap[
-                    payment.getMemberId()
-                ] += payment.getAmountPaid();
+                if(payment.getExpenseId() != expense.getId())
+                {
+                    continue;
+                }
 
-                paymentFrequency[
-                    payment.getMemberId()
-                ]++;
-            }
+                std::string memberName = "Unknown";
 
-            double averageExpense = 0;
+                for(const auto& member : members)
+                {
+                    if(member.getId() == payment.getMemberId())
+                    {
+                        memberName = member.getName();
+                        break;
+                    }
+                }
 
-            if(expenseCount > 0)
-            {
-                averageExpense =
-                    totalSpending
-                    / expenseCount;
-            }
-            double maxContribution = 0;
-
-        std::string topContributor =
-            "None";
-
-        for(const auto& member : members)
-        {
-            if(member.getGroupId()
-            != groupId)
-            {
-                continue;
-            }
-
-            if(
-                contributionMap[
-                    member.getId()
-                ]
-                >
-                maxContribution
-            )
-            {
-                maxContribution =
-                    contributionMap[
-                        member.getId()
-                    ];
-
-                topContributor =
-                    member.getName();
+                std::cout << memberName << " ₹" << payment.getAmountPaid() << "\n";
             }
         }
+    }
+
+    void viewDashboard(
+        int groupId,
+        const std::vector<Member>& members
+    )
+    {
+        auto expenses =
+            expenseRepo.getExpensesByGroup(groupId);
+
+        auto payments =
+            paymentRepo.getPaymentsByGroup(groupId);
+
+        int memberCount = static_cast<int>(members.size());
+        int expenseCount = 0;
+
+        double totalSpending = 0;
+        double largestAmount = 0;
+
+        std::string largestExpense = "None";
+
+        std::unordered_map<int, double> contributionMap;
+        std::unordered_map<int, int> paymentFrequency;
+
+        for(const auto& expense : expenses)
+        {
+            expenseCount++;
+            totalSpending += expense.getAmount();
+
+            if(expense.getAmount() > largestAmount)
+            {
+                largestAmount = expense.getAmount();
+                largestExpense = expense.getTitle();
+            }
+        }
+
+        for(const auto& payment : payments)
+        {
+            contributionMap[payment.getMemberId()] += payment.getAmountPaid();
+            paymentFrequency[payment.getMemberId()]++;
+        }
+
+        double averageExpense = 0;
+
+        if(expenseCount > 0)
+        {
+            averageExpense = totalSpending / expenseCount;
+        }
+
+        double maxContribution = 0;
+        std::string topContributor = "None";
+
         int maxFrequency = 0;
-
-        std::string frequentPayer =
-            "None";
+        std::string frequentPayer = "None";
 
         for(const auto& member : members)
         {
-            if(member.getGroupId()
-            != groupId)
+            if(contributionMap[member.getId()] > maxContribution)
             {
-                continue;
+                maxContribution = contributionMap[member.getId()];
+                topContributor = member.getName();
             }
 
-            if(
-                paymentFrequency[
-                    member.getId()
-                ]
-                >
-                maxFrequency
-            )
+            if(paymentFrequency[member.getId()] > maxFrequency)
             {
-                maxFrequency =
-                    paymentFrequency[
-                        member.getId()
-                    ];
-
-                frequentPayer =
-                    member.getName();
+                maxFrequency = paymentFrequency[member.getId()];
+                frequentPayer = member.getName();
             }
         }
 
-           std::cout
-                    << "\n=================================\n"
-                    << "         DASHBOARD\n"
-                    << "=================================\n";
+        std::cout
+            << "\n=================================\n"
+            << "         DASHBOARD\n"
+            << "=================================\n";
 
-                std::cout
-                    << "\nMembers : "
-                    << memberCount;
-
-                std::cout
-                    << "\nExpenses : "
-                    << expenseCount;
-
-                std::cout
-                    << "\nTotal Spending : ₹"
-                    << totalSpending;
-
-                std::cout
-                    << "\nAverage Expense : ₹"
-                    << averageExpense;
-
-                std::cout
-                    << "\n\nLargest Expense : "
-                    << largestExpense
-                    << " ₹"
-                    << largestAmount;
-
-                std::cout
-                    << "\n\nTop Contributor : "
-                    << topContributor
-                    << " ₹"
-                    << maxContribution;
-
-                std::cout
-                    << "\nMost Frequent Payer : "
-                    << frequentPayer
-                    << " ("
-                    << maxFrequency
-                    << " payments)";
-
-                std::cout
-                    << "\n=================================\n";
+        std::cout << "\nMembers : " << memberCount;
+        std::cout << "\nExpenses : " << expenseCount;
+        std::cout << "\nTotal Spending : ₹" << totalSpending;
+        std::cout << "\nAverage Expense : ₹" << averageExpense;
+        std::cout << "\n\nLargest Expense : " << largestExpense << " ₹" << largestAmount;
+        std::cout << "\n\nTop Contributor : " << topContributor << " ₹" << maxContribution;
+        std::cout << "\nMost Frequent Payer : " << frequentPayer << " (" << maxFrequency << " payments)";
+        std::cout << "\n=================================\n";
     }
-        void deleteExpense(
+
+    void deleteExpense(
+        int groupId,
         int expenseId
-        )
-        {
-            expenseRepo.deleteExpense(
-                expenseId
-            );
-
-            paymentRepo
-                .deletePaymentsByExpenseId(
-                    expenseId
-                );
-        }
-
-        std::vector<Expense>
-        getAllExpenses()
-        {
-            return expenseRepo
-                .getAllExpenses();
-        }
-double getMemberBalance(
-    int groupId,
-    int memberId,
-    const std::vector<Member>& members
-)
-{
-    auto expenses =
-        expenseRepo.getAllExpenses();
-
-    auto payments =
-        paymentRepo.getAllPayments();
-
-    double balance = 0;
-
-    for(const auto& payment : payments)
+    )
     {
-        if(payment.getMemberId()
-           == memberId)
-        {
-            balance +=
-                payment.getAmountPaid();
-        }
+        expenseRepo.deleteExpense(groupId, expenseId);
+        paymentRepo.deletePaymentsByExpenseId(groupId, expenseId);
     }
 
-    int memberCount = 0;
-
-    for(const auto& member : members)
+    std::vector<Expense> getExpensesByGroup(
+        int groupId
+    )
     {
-        if(member.getGroupId()
-           == groupId)
-        {
-            memberCount++;
-        }
+        return expenseRepo.getExpensesByGroup(groupId);
     }
 
-    for(const auto& expense : expenses)
+    double getMemberBalance(
+        int groupId,
+        int memberId,
+        const std::vector<Member>& members
+    )
     {
-        if(expense.getGroupId()
-           != groupId)
-        {
-            continue;
-        }
+        auto balances = computeBalances(groupId, members);
 
-        balance -=
-            expense.getAmount()
-            / memberCount;
+        return balances[memberId];
     }
-
-    return balance;
-}
 };

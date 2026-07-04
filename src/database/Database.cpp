@@ -10,6 +10,13 @@ Database::Database()
         "../data/smartsplit.db";
 }
 
+Database& Database::getInstance()
+{
+    static Database instance;
+
+    return instance;
+}
+
 Database::~Database()
 {
     close();
@@ -53,6 +60,12 @@ Database::getConnection()
     return db;
 }
 
+std::mutex&
+Database::getMutex()
+{
+    return dbMutex;
+}
+
 void Database::initialize()
 {
     const char* sql = R"(
@@ -65,9 +78,11 @@ void Database::initialize()
 
     CREATE TABLE IF NOT EXISTS members
     (
-        id INTEGER PRIMARY KEY,
         group_id INTEGER NOT NULL,
+        id INTEGER NOT NULL,
         name TEXT NOT NULL,
+
+        PRIMARY KEY(group_id, id),
 
         FOREIGN KEY(group_id)
         REFERENCES groups(id)
@@ -87,14 +102,12 @@ void Database::initialize()
     CREATE TABLE IF NOT EXISTS expense_payments
     (
         expense_id INTEGER NOT NULL,
+        group_id INTEGER NOT NULL,
         member_id INTEGER NOT NULL,
         amount_paid REAL NOT NULL,
 
         FOREIGN KEY(expense_id)
-        REFERENCES expenses(id),
-
-        FOREIGN KEY(member_id)
-        REFERENCES members(id)
+        REFERENCES expenses(id)
     );
 
     )";

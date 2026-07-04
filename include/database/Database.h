@@ -2,6 +2,7 @@
 
 #include <sqlite3.h>
 #include <string>
+#include <mutex>
 
 class Database
 {
@@ -11,9 +12,17 @@ private:
 
     std::string databasePath;
 
-public:
+    std::mutex dbMutex;
 
     Database();
+
+public:
+
+    static Database& getInstance();
+
+    Database(const Database&) = delete;
+
+    Database& operator=(const Database&) = delete;
 
     ~Database();
 
@@ -22,6 +31,8 @@ public:
     void close();
 
     sqlite3* getConnection();
+
+    std::mutex& getMutex();
 
     void initialize();
 };

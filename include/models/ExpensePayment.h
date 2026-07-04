@@ -6,6 +6,8 @@ private:
 
     int expenseId;
 
+    int groupId;
+
     int memberId;
 
     double amountPaid;
@@ -16,10 +18,12 @@ public:
 
     ExpensePayment(
         int expenseId,
+        int groupId,
         int memberId,
         double amountPaid
     )
         : expenseId(expenseId),
+          groupId(groupId),
           memberId(memberId),
           amountPaid(amountPaid)
     {}
@@ -27,6 +31,11 @@ public:
     int getExpenseId() const
     {
         return expenseId;
+    }
+
+    int getGroupId() const
+    {
+        return groupId;
     }
 
     int getMemberId() const

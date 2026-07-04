@@ -13,7 +13,14 @@ public:
     ) = 0;
 
     virtual std::vector<ExpensePayment>
-    getAllPayments() = 0;
+    getPaymentsByGroup(
+        int groupId
+    ) = 0;
+
+    virtual void deletePaymentsByExpenseId(
+        int groupId,
+        int expenseId
+    ) = 0;
 
     virtual ~IExpensePaymentRepository() = default;
 };

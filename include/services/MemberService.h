@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../repository/FileMemberRepository.h"
+#include "../repository/SQLiteMemberRepository.h"
 
 #include <iostream>
 
@@ -8,37 +8,16 @@ class MemberService
 {
 private:
 
-    FileMemberRepository repository;
-
-    int nextId = 1;
+    SQLiteMemberRepository repository;
 
 public:
-
-    MemberService()
-    {
-        auto members =
-            repository.getAllMembers();
-
-        if(!members.empty())
-        {
-            nextId =
-                members.back().getId()
-                + 1;
-        }
-    }
 
     void addMember(
         int groupId,
         const std::string& name
     )
     {
-        Member member(
-            nextId++,
-            groupId,
-            name
-        );
-
-        repository.saveMember(member);
+        repository.addMember(groupId, name);
     }
 
     void viewMembers(
@@ -46,56 +25,55 @@ public:
     )
     {
         auto members =
-            repository.getAllMembers();
+            repository.getMembersByGroup(groupId);
 
-        bool found = false;
-
-        for(auto& member : members)
-        {
-            if(member.getGroupId()
-               == groupId)
-            {
-                found = true;
-
-                std::cout
-                    << member.getId()
-                    << ". "
-                    << member.getName()
-                    << "\n";
-            }
-        }
-
-        if(!found)
+        if(members.empty())
         {
             std::cout
                 << "\nNo Members Found\n";
+
+            return;
+        }
+
+        for(auto& member : members)
+        {
+            std::cout
+                << member.getId()
+                << ". "
+                << member.getName()
+                << "\n";
         }
     }
 
     void removeMember(
+        int groupId,
         int memberId
     )
     {
         repository.deleteMember(
+            groupId,
             memberId
         );
     }
-    std::vector<Member> getAllMembers()
+
+    std::vector<Member> getMembersByGroup(
+        int groupId
+    )
     {
-        return repository.getAllMembers();
+        return repository.getMembersByGroup(groupId);
     }
-bool memberExists(
-    int groupId,
-    const std::string& name
-)
+
+    bool memberExists(
+        int groupId,
+        const std::string& name
+    )
     {
         auto members =
-            repository.getAllMembers();
+            repository.getMembersByGroup(groupId);
 
         for(const auto& member : members)
         {
-            if(member.getGroupId() == groupId &&
-            member.getName() == name)
+            if(member.getName() == name)
             {
                 return true;
             }

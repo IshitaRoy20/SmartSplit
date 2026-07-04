@@ -8,12 +8,21 @@ class IExpenseRepository
 {
 public:
 
-    virtual void saveExpense(
-        const Expense& expense
+    virtual Expense addExpense(
+        int groupId,
+        const std::string& title,
+        double amount
     ) = 0;
 
     virtual std::vector<Expense>
-    getAllExpenses() = 0;
+    getExpensesByGroup(
+        int groupId
+    ) = 0;
+
+    virtual void deleteExpense(
+        int groupId,
+        int expenseId
+    ) = 0;
 
     virtual ~IExpenseRepository() = default;
 };
