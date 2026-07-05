@@ -136,7 +136,7 @@ sqlite3_exec(db, "PRAGMA foreign_keys = ON;", nullptr, nullptr, nullptr);
 
 ---
 
-## Relationships in Plain English
+## Relationships
 
 - One **group** has many **members**. A member belongs to exactly one group.
 - One **group** has many **expenses**. An expense belongs to exactly one group.
