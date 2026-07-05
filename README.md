@@ -1,421 +1,139 @@
-# 🚀 SmartSplit — Thread-Safe, SQLite-Backed, LRU-Cached Expense Sharing & Debt Optimization Engine
+# 🚀 SmartSplit — Adaptive, SQLite-Backed, Thread-Safe Expense Settlement Engine
 
-SmartSplit is a modular C++ expense-splitting and debt-settlement engine backed by **SQLite**, accelerated with a hand-built **LRU cache** (~47x faster repeated reads), and made **thread-safe** with mutex-guarded, atomic data access — proven under real concurrent load, not just assumed.
+SmartSplit splits expenses and settles debts with an **adaptive settlement engine**: exact backtracking that *guarantees* the minimum number of transactions for small groups, auto-switching to an O(n log n) priority-queue greedy algorithm past the point where exact search gets exponential — a cutover measured with real benchmarks (1.5s at 15 people, 110s at 17), not guessed.
+
+Underneath that: **SQLite** persistence, a hand-built **LRU cache** (~47x faster repeated reads), and **mutex-guarded thread safety** proven under real concurrent load (100/100 concurrent inserts land safely, vs. 6/100 without the fix).
 
 ---
 
 ## 🎯 Why SmartSplit?
 
-Most expense-sharing applications answer:
+Most expense apps answer "who paid how much." SmartSplit answers **"who owes whom, in the *minimum* number of transactions — computed adaptively, safely, and fast, even under concurrent access."**
 
-> "Who paid how much?"
+---
 
-SmartSplit answers:
+# 🧠 Adaptive Debt Settlement Engine
 
-> "Who actually owes whom, by how much, and what is the minimum number of transactions required to settle everything — safely, fast, and correctly, even under concurrent access?"
+A plain greedy match doesn't always minimize transaction count:
 
-The system transforms raw payment records into an optimized settlement network, helping groups settle debts efficiently while preserving complete financial history in a real relational database.
+```
+Creditors: A +500  B +400        Naive greedy:  4 transactions
+Debtors:   C -400  D -200  E -300  True optimal: 3 transactions (C→B, D→A, E→A)
+```
+
+Finding the 3-transaction answer needs a real search, not a linear pass. So SmartSplit runs it as a **Strategy + Factory** pipeline:
+
+```
+ExactMatchPreprocessor  →  cancels perfect debtor/creditor pairs via hash map, O(1) each
+        │
+SettlementEngineFactory →  picks the strategy by remaining participant count
+        │
+        ├── OptimalSettlementEngine       exact backtracking + pruning — guaranteed minimum
+        └── HybridGreedySettlementEngine  two max-heaps — O(n log n), scales to any size
+```
+
+**The exact solver is deliberately not called "DP"** — minimizing transaction count is a subset-sum/partition variant, NP-hard in general, with no polynomial DP formulation. It's real backtracking: try every debtor/creditor pairing, transfer `min(debt, credit)`, recurse, prune any branch that can't beat the best found so far.
+
+**The size cutoff is measured, not guessed** — worst-case (adversarial, no lucky cancellations) benchmark of the exact solver:
+
+| Participants | 13 | 14 | **15** | 16 | 17 |
+|---|---|---|---|---|---|
+| Time | 45ms | 285ms | **1.5s** | 5.5s | ~110s |
+
+Roughly 6-7x growth per participant — the exponential signature of the NP-hard problem, visible in real numbers. The threshold sits right where that curve is still tolerable for an interactive session.
+
+`ExpenseService` contains zero settlement math — it hands balances to the module and prints back whatever comes out. A fourth algorithm later is one new class and one factory line.
 
 ---
 
 # ✨ Core Capabilities
 
-## 👥 Group Lifecycle Management
-
-Create and manage multiple independent expense groups.
-
-Examples:
-
-* College roommates
-* Trip planning groups
-* Office teams
-* Event organizers
-* Shared apartment expenses
-
-Features:
-
-* Group creation
-* Group isolation
-* Group-specific expense tracking
-* Independent financial ledgers
+* **Group lifecycle** — independent groups, isolated ledgers, group-specific expense tracking.
+* **Group-scoped member IDs** — composite primary key `(group_id, id)`, so Group A's member `#1` and Group B's member `#1` are different people, correctly disambiguated everywhere (balances, payments, settlements) without ever leaking across groups.
+* **Multi-payer expenses** — one bill, multiple contributors, each contribution tracked and reconciled.
+* **Full expense ledger** — persisted in SQLite: id, title, amount, contributors, contribution amounts.
+* **Financial reconciliation** — `Net Balance = Total Paid − Fair Share`, live per group.
+* **Dashboard analytics** — total members/expenses/spending, average expense, largest expense, top contributor, most frequent payer.
+* **Validation layer** — duplicate/invalid member and group protection, negative-payment rejection, expense-payment mismatch rejection (`Total Paid ≠ Expense Amount` is refused outright), debt-aware member removal.
 
 ---
 
-## 🧑‍🤝‍🧑 Member Management Engine — Now with Group-Scoped Identity
+# ⚡ LRU Caching
 
-SmartSplit maintains group membership while enforcing financial integrity — and members are no longer just *tagged* with a group, they're **identified by it**.
+Every repository sits behind a generic, hand-built `LRUCache<Key, Value>` (doubly-linked list + hash map, O(1) get/put), invalidated per-group on every write.
 
-### 🔑 Group-Scoped Member IDs
-
-Every member's ID is scoped to their group via a composite primary key `(group_id, id)`, not a single global counter. That means:
-
-* Group A's member `#1` and Group B's member `#1` can both exist — they're different people, correctly disambiguated everywhere in the system.
-* Member IDs stay small, sequential, and human-friendly per group instead of climbing into the hundreds across the whole application.
-* Every balance, payment, and settlement query is group-scoped end to end, so there's zero risk of one group's financial data leaking into another's — even when IDs coincide.
-
-### Implemented Safeguards
-
-✅ Duplicate member prevention
-
-✅ Empty-input validation
-
-✅ Invalid member detection
-
-✅ Invalid group protection
-
-✅ Debt-aware member removal
-
-A member cannot be removed if unresolved financial obligations still exist within the group.
+**Benchmarked:** ~0.053 ms/call direct-to-SQLite vs. ~0.001 ms/call cached — **~47x faster** on repeated reads.
 
 ---
 
-## 💰 Multi-Payer Expense Processing
+# 🔒 Thread Safety
 
-Unlike many beginner expense trackers, SmartSplit supports **multiple contributors for a single expense**.
+One `Database` singleton owns the SQLite connection and a `std::mutex` guarding every query; the LRU cache has its own separate mutex. ID generation and insertion (`addMember`, `addGroup`, `addExpense`) are single-lock atomic operations, closing the classic check-then-act race.
 
-Example:
-
-Restaurant Bill ₹3000
-
-Rahul paid ₹2000
-
-Priya paid ₹1000
-
-SmartSplit records the payment distribution and incorporates it into future settlement calculations.
+**Proven:** 100 concurrent inserts through an intentionally unprotected path lost 94 to id collisions. The same 100 through the real mutex-protected path: **100/100 landed, all unique.**
 
 ---
 
-## 🧾 Expense Ledger System
-
-Every expense is permanently recorded in SQLite and remains available for inspection.
-
-Stored information includes:
-
-* Expense ID
-* Title
-* Amount
-* Contributors
-* Contribution amounts
-
-Users can:
-
-* Add expenses
-* View expenses
-* Inspect expense details
-* Delete expenses
-
----
-
-# ⚡ Financial Reconciliation Engine
-
-The heart of SmartSplit.
-
-For every group, the system continuously computes:
-
-```text
-Net Balance =
-Total Amount Paid
-−
-Fair Share Of Expenses
-```
-
-This instantly identifies:
-
-* Creditors (members owed money)
-* Debtors (members who owe money)
-
-The result is a live financial state for the entire group.
-
----
-
-# 🧠 Debt Settlement Optimization
-
-One of SmartSplit's strongest features.
-
-Instead of producing a large number of redundant repayments, SmartSplit performs settlement minimization using a creditor-debtor matching strategy.
-
-### Example
-
-💡 Settlement Optimization Example
-
-```
-Before Optimization:
-
-Rahul → Amit  ₹500
-Rahul → Priya ₹300
-Karan → Amit  ₹400
-Karan → Priya ₹200
-Neha  → Amit  ₹100
-Neha  → Priya ₹500
-
-Transactions Required: 6
-
-After SmartSplit Optimization:
-
-Rahul → Amit  ₹800
-Karan → Priya ₹600
-Neha  → Amit  ₹200
-Neha  → Priya ₹400
-
-Transactions Required: 4
-
-📉 Transaction Reduction: 33.33%
-```
-
-The system automatically generates a minimal settlement plan from the balance graph.
-
----
-
-# 📊 Settlement Analytics
-
-SmartSplit doesn't just generate settlements.
-
-It evaluates their efficiency.
-
-Metrics include:
-
-* Number of debtors
-* Number of creditors
-* Potential transaction count
-* Optimized transaction count
-* Transaction reduction percentage
-
-This transforms settlement generation from a simple output feature into an algorithmic optimization problem.
-
----
-
-# 📈 Financial Intelligence Dashboard
-
-SmartSplit provides high-level financial analytics for every group.
-
-### Dashboard Metrics
-
-👥 Total Members
-
-🧾 Total Expenses
-
-💵 Total Group Spending
-
-📊 Average Expense Value
-
-🏆 Largest Expense Recorded
-
-🥇 Top Contributor
-
-🔥 Most Frequent Payer
-
-These metrics provide a quick snapshot of the group's financial activity.
-
----
-
-# ⚡ Performance Layer — LRU Caching
-
-SmartSplit doesn't hit the database on every single read.
-
-Every repository (`SQLiteGroupRepository`, `SQLiteMemberRepository`, `SQLiteExpenseRepository`, `SQLiteExpensePaymentRepository`) sits behind a hand-built, generic `LRUCache<Key, Value>` — a doubly-linked list plus a hash map, giving **O(1) get/put** with true least-recently-used eviction.
-
-* Reads for a group's members, expenses, and payments are served from memory once cached.
-* Any write immediately invalidates the affected group's cache entry, so data is never stale.
-* **Benchmarked result:** repeated reads dropped from ~0.053 ms/call (hitting SQLite directly) to ~0.001 ms/call (served from cache) — a **~47x speedup** on hot-path reads.
-
----
-
-# 🔒 Thread Safety — Mutex-Guarded, Race-Free by Design
-
-SmartSplit isn't just structured for a single-threaded CLI session — its data layer is genuinely **safe under concurrent access**.
-
-* A single shared `Database` singleton owns the SQLite connection and a `std::mutex` that guards every query.
-* The LRU cache is independently protected by its own mutex, so cache reads/writes from multiple threads can never corrupt its internal list or map.
-* ID generation and record insertion (`addMember`, `addGroup`, `addExpense`) are **atomic single-lock operations** — the "compute next ID" and "insert the row" steps happen under one uninterrupted lock, closing the classic check-then-act race condition.
-
-**Proven, not assumed:** a stress test firing 100 concurrent inserts at an intentionally-unprotected code path lost 94 of them to id collisions. The same 100 concurrent inserts against SmartSplit's actual mutex-protected `addMember` landed **100 out of 100**, every id unique.
-
----
-
-# 🛡️ Data Integrity & Validation Layer
-
-A major focus of the project was preventing invalid financial states.
-
-Implemented validations include:
-
-* Invalid group IDs
-* Invalid member IDs
-* Duplicate payers
-* Negative payments
-* Invalid payer counts
-* Empty names
-* Duplicate members
-* Expense-payment mismatch detection
-* Outstanding debt protection
-
-An expense is rejected if:
-
-```text
-Total Paid
-≠
-Expense Amount
-```
-
-preventing ghost transactions and inconsistent ledger states.
-
----
-
-# 🏗️ Software Architecture
-
-SmartSplit was redesigned around a persistent, cached, thread-safe data layer while preserving clean separation of concerns.
+# 🏗️ Architecture
 
 ```text
 SmartSplit-main/
-│
-├── src/cli/           Menu.cpp
-├── include/cli/        Menu.h
-│
-├── include/services/    GroupService, MemberService, ExpenseService
-│
-├── include/repository/  IGroupRepository, IMemberRepository,
-│                        IExpenseRepository, IExpensePaymentRepository
-│                        SQLiteGroupRepository, SQLiteMemberRepository,
-│                        SQLiteExpenseRepository, SQLiteExpensePaymentRepository
-├── src/repository/      SQLite*.cpp (implementations)
-│
-├── include/cache/       LRUCache.h  (generic, thread-safe LRU cache)
-│
-├── include/database/    Database.h   (singleton, shared mutex, schema init)
-├── src/database/        Database.cpp
-│
-├── include/models/      Group, Member, Expense, ExpensePayment
-│
-├── data/                smartsplit.db  (SQLite database file)
-│
-├── benchmark/           benchmark.cpp  (cache & concurrency benchmarks)
-│
+├── include/cli/, src/cli/            Menu (presentation only)
+├── include/services/                 GroupService, MemberService,
+│                                      ExpenseService (balances only — no settlement code)
+├── include/repository/, src/repository/  I*Repository interfaces + SQLite* implementations
+├── include/settlement/, src/settlement/  ISettlementEngine, OptimalSettlementEngine,
+│                                      HybridGreedySettlementEngine, SettlementEngineFactory,
+│                                      ExactMatchPreprocessor, SettlementTypes
+├── include/cache/                    LRUCache.h (generic, thread-safe)
+├── include/database/, src/database/  Database (singleton, shared mutex, schema init)
+├── include/models/                   Group, Member, Expense, ExpensePayment
+├── benchmark/                        benchmark.cpp, settlement_benchmark.cpp
+├── data/                             smartsplit.db
 └── src/main.cpp
 ```
 
----
-
-# 🧩 Design Patterns & Concepts Demonstrated
-
-### Repository Pattern
-
-Abstracts storage operations from business logic — swapped from file-based persistence to SQLite without changing a single service's public interface.
-
-### Singleton Pattern
-
-`Database` centralizes the one shared SQLite connection and its mutex, avoiding connection sprawl across repositories.
-
-### Layered Architecture
-
-CLI → Services → Repositories → SQLite Persistence
-
-### Object-Oriented Design
-
-Encapsulation of:
-
-* Groups
-* Members
-* Expenses
-* Payments
-
-### Financial State Modeling
-
-Represents real-world debt relationships using computed balances.
-
-### Greedy Optimization
-
-Used for settlement minimization and transaction reduction.
-
-### Data Validation Pipelines
-
-Protects the application from invalid financial states.
-
-### Caching Strategy
-
-Generic LRU cache with per-group invalidation-on-write, cutting repeated-read latency by ~47x.
-
-### Concurrency Control
-
-Mutex-protected singleton database access with atomic id-generation-plus-insert operations, verified under real concurrent load.
+**Patterns demonstrated:** Repository, Singleton, **Strategy + Factory** (settlement engines), Layered Architecture, OOP encapsulation, exact/greedy algorithm design, LRU caching, mutex-based concurrency control.
 
 ---
 
-# ⚙️ Technologies
+# ⚙️ Tech Stack
 
-* C++17
-* STL (`std::mutex`, `std::list`, `std::unordered_map`, `std::thread`)
-* **SQLite3** (relational persistence)
-* CMake
-* Custom **LRU Cache** implementation
-* **Thread-safe**, mutex-guarded data access
-* Object-Oriented Programming
+C++17 · SQLite3 · CMake · STL (`mutex`, `list`, `unordered_map`, `priority_queue`, `thread`) · custom LRU cache · exact backtracking + priority-queue greedy algorithms
 
 ---
 
-# 🚀 Running SmartSplit
-
-### Build
+# 🚀 Running It
 
 ```bash
-mkdir build
-cd build
-cmake ..
-make
-```
-
-### Run
-
-```bash
+mkdir build && cd build
+cmake .. && make
 ./SmartSplit
 ```
 
-The SQLite database (`data/smartsplit.db`) and its schema are created automatically on first launch — no manual setup required.
-
-### Inspect the database directly
+Database and schema auto-create on first run — no manual setup.
 
 ```bash
-sqlite3 data/smartsplit.db
-```
-
-```sql
+sqlite3 data/smartsplit.db          # inspect directly
 .headers on
 .mode column
-.tables
 SELECT * FROM groups;
-SELECT * FROM members;
 ```
 
-See `DATABASE_SCHEMA.md` for the full ER diagram, table-by-table breakdown, and constraints.
+Full ER diagram and constraints: `DATABASE_SCHEMA.md`.
+
+Reproduce the settlement benchmark table:
+
+```bash
+g++ -std=c++17 -O2 -Iinclude benchmark/settlement_benchmark.cpp \
+  src/settlement/ExactMatchPreprocessor.cpp \
+  src/settlement/OptimalSettlementEngine.cpp \
+  src/settlement/HybridGreedySettlementEngine.cpp \
+  -o settlement_benchmark && ./settlement_benchmark
+```
 
 ---
 
-# 💡 What Makes This Project Stand Out?
+# 💡 What Makes This Stand Out
 
-SmartSplit is not a CRUD application.
-
-It combines:
-
-✅ Real SQLite-backed persistence (not flat files)
-
-✅ A hand-built, thread-safe LRU cache with a proven ~47x speedup
-
-✅ Mutex-guarded concurrency, with a real race condition found, reproduced, and fixed
-
-✅ Group-scoped member identity via composite primary keys
-
-✅ Financial reconciliation
-
-✅ Debt optimization
-
-✅ Settlement generation
-
-✅ Contribution analytics
-
-✅ Ledger management
-
-✅ Validation-driven workflows
-
-✅ Repository-based, interface-driven architecture
-
-The project demonstrates how software engineering principles — persistence design, caching, and concurrency control — can be applied to solve real-world financial coordination problems while maintaining clean architecture, modularity, and extensibility.
-
-In short, SmartSplit behaves less like a simple expense tracker and more like a lightweight, concurrent, cache-accelerated financial settlement engine.
+Not a CRUD app. It's SQLite-backed persistence, a proven ~47x LRU cache speedup, a real race condition found-and-fixed under mutex protection, group-scoped composite-key identity, and an adaptive Strategy+Factory settlement engine that guarantees minimal transactions where it can and stays fast where it can't — with every claim above backed by a number that was actually measured, not asserted.
