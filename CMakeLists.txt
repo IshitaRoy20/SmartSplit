@@ -15,6 +15,9 @@ add_executable(
     src/repository/SQLiteMemberRepository.cpp
     src/repository/SQLiteExpenseRepository.cpp
     src/repository/SQLiteExpensePaymentRepository.cpp
+    src/settlement/ExactMatchPreprocessor.cpp
+    src/settlement/OptimalSettlementEngine.cpp
+    src/settlement/HybridGreedySettlementEngine.cpp
     src/utilities/ConfigPath.cpp
     src/database/Database.cpp
 )

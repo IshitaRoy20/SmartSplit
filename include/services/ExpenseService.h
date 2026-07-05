@@ -2,11 +2,15 @@
 
 #include "../repository/SQLiteExpenseRepository.h"
 #include "../repository/SQLiteExpensePaymentRepository.h"
+#include "../settlement/SettlementTypes.h"
+#include "../settlement/ExactMatchPreprocessor.h"
+#include "../settlement/SettlementEngineFactory.h"
 
 #include <iostream>
 #include <unordered_map>
 #include <vector>
 #include <algorithm>
+#include <cmath>
 
 class ExpenseService
 {
@@ -150,108 +154,71 @@ public:
                 << "\n";
         }
 
-        struct Person
-        {
-            int memberId;
-            double amount;
-        };
-
-        std::vector<Person> creditors;
-        std::vector<Person> debtors;
+        std::vector<Balance> nonZeroBalances;
 
         for(const auto& member : members)
         {
             double balance = balances[member.getId()];
 
-            if(balance > 0.01)
+            if(std::abs(balance) > 0.01)
             {
-                creditors.push_back({member.getId(), balance});
-            }
-            else if(balance < -0.01)
-            {
-                debtors.push_back({member.getId(), -balance});
+                nonZeroBalances.push_back({member.getId(), balance});
             }
         }
 
-        int rawTransactions = static_cast<int>(debtors.size() * creditors.size());
-        int optimizedTransactions = 0;
+        auto exactMatches = ExactMatchPreprocessor::extractExactMatches(nonZeroBalances);
 
-        std::cout
-            << "\n===== SETTLEMENT ANALYSIS =====\n";
+        auto engine = SettlementEngineFactory::create(static_cast<int>(nonZeroBalances.size()));
 
-        std::cout << "\nDebtors : " << debtors.size();
-        std::cout << "\nCreditors : " << creditors.size();
-        std::cout << "\nPotential Transactions : " << rawTransactions;
+        auto engineTransactions = engine->computeSettlements(nonZeroBalances);
+
+        std::vector<SettlementTransaction> allTransactions = exactMatches;
+
+        for(const auto& txn : engineTransactions)
+        {
+            allTransactions.push_back(txn);
+        }
+
+        std::cout << "\n===== SETTLEMENT ANALYSIS =====\n";
+        std::cout << "\nAlgorithm : " << engine->name();
+        std::cout << "\nParticipants : " << nonZeroBalances.size() + (exactMatches.size() * 2);
+        std::cout << "\nExact Matches Pre-Settled : " << exactMatches.size();
+        std::cout << "\nTransactions : " << allTransactions.size();
+        std::cout << "\nComplexity : " << engine->complexity();
         std::cout << "\n---------------------\n";
 
-        size_t i = 0;
-        size_t j = 0;
-
-        bool found = false;
-
-        while(i < debtors.size() && j < creditors.size())
-        {
-            double amount = std::min(debtors[i].amount, creditors[j].amount);
-
-            std::string debtorName;
-            std::string creditorName;
-
-            for(const auto& member : members)
-            {
-                if(member.getId() == debtors[i].memberId)
-                {
-                    debtorName = member.getName();
-                }
-
-                if(member.getId() == creditors[j].memberId)
-                {
-                    creditorName = member.getName();
-                }
-            }
-
-            std::cout
-                << debtorName
-                << " pays "
-                << creditorName
-                << " ₹"
-                << amount
-                << "\n";
-
-            found = true;
-            optimizedTransactions++;
-
-            debtors[i].amount -= amount;
-            creditors[j].amount -= amount;
-
-            if(debtors[i].amount < 0.01)
-            {
-                i++;
-            }
-
-            if(creditors[j].amount < 0.01)
-            {
-                j++;
-            }
-        }
-
-        if(!found)
+        if(allTransactions.empty())
         {
             std::cout << "No Settlements Required.\n";
         }
         else
         {
-            double reduction = 0;
-
-            if(rawTransactions > 0)
+            for(const auto& txn : allTransactions)
             {
-                reduction =
-                    (rawTransactions - optimizedTransactions)
-                    * 100.0
-                    / rawTransactions;
-            }
+                std::string fromName;
+                std::string toName;
 
-            std::cout << "\n\nOptimized Transactions : " << optimizedTransactions;
-            std::cout << "\nTransaction Reduction : " << reduction << "%\n";
+                for(const auto& member : members)
+                {
+                    if(member.getId() == txn.fromMemberId)
+                    {
+                        fromName = member.getName();
+                    }
+
+                    if(member.getId() == txn.toMemberId)
+                    {
+                        toName = member.getName();
+                    }
+                }
+
+                std::cout
+                    << fromName
+                    << " pays "
+                    << toName
+                    << " ₹"
+                    << txn.amount
+                    << "\n";
+            }
         }
     }
 
